@@ -1,0 +1,16 @@
+job_title,company,location,skill_required,skill_category,min_salary,max_salary,experience_years,industry,demand_score,avg_salary,salary_range
+Data Analyst,TechCorp,New York,Python,Programming,70000,95000,2,Technology,85,82500.0,25000
+Data Analyst,DataInsights,San Francisco,SQL,Database,75000,100000,2,Technology,90,87500.0,25000
+Data Analyst,BusinessTech,Chicago,Excel,Analytics,60000,80000,1,Business,75,70000.0,20000
+Data Scientist,AIInnovations,New York,Python,Programming,100000,140000,3,Technology,95,120000.0,40000
+Data Scientist,DeepLearning,Seattle,Machine Learning,AI,120000,160000,4,Technology,98,140000.0,40000
+Data Engineer,CloudData,Boston,SQL,Database,90000,120000,3,Technology,88,105000.0,30000
+Data Engineer,BigDataCorp,Austin,Python,Programming,85000,115000,3,Technology,85,100000.0,30000
+Business Analyst,FinancePro,New York,Excel,Analytics,65000,85000,2,Finance,80,75000.0,20000
+Business Analyst,ConsultGroup,Chicago,SQL,Database,70000,90000,2,Consulting,78,80000.0,20000
+ML Engineer,AIDynamics,San Francisco,TensorFlow,AI,130000,180000,5,Technology,96,155000.0,50000
+ML Engineer,NeuralTech,Seattle,PyTorch,AI,125000,175000,4,Technology,94,150000.0,50000
+Data Analyst,HealthData,Boston,Statistics,Analytics,68000,88000,2,Healthcare,82,78000.0,20000
+Data Scientist,PharmaCorp,New Jersey,R,Programming,95000,130000,3,Pharmaceuticals,87,112500.0,35000
+DevOps Engineer,CloudOps,Austin,Docker,DevOps,100000,135000,4,Technology,89,117500.0,35000
+DevOps Engineer,InfraTech,Chicago,Kubernetes,DevOps,105000,140000,4,Technology,91,122500.0,35000
