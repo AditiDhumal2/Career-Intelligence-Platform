@@ -1,10 +1,10 @@
 """
 Career Intelligence Platform - Complete Dashboard
-With Resume Parser, API Integration, and Advanced Features
 """
 
 import streamlit as st
 import pandas as pd
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from pathlib import Path
@@ -16,11 +16,17 @@ import os
 # Add src to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.job_analyzer import JobMarketAnalyzer
-from src.skill_gap_analyzer import SkillGapAnalyzer
-from src.career_path_mapper import CareerPathMapper
-from src.resume_parser import ResumeParser
-from src.job_scraper import RealTimeJobScraper
+# Import local modules with error handling
+try:
+    from src.job_analyzer import JobMarketAnalyzer
+    from src.skill_gap_analyzer import SkillGapAnalyzer
+    from src.career_path_mapper import CareerPathMapper
+    from src.resume_parser import ResumeParser
+    from src.job_scraper import RealTimeJobScraper
+except ImportError as e:
+    st.error(f"⚠️ Error importing modules: {e}")
+    st.info("Make sure all src files are present in the repository")
+    sys.exit(1)
 
 # Fix for PyArrow regex issue
 pd.options.mode.string_storage = 'python'
@@ -209,7 +215,7 @@ st.markdown("""
         border-right: 1px solid #dee2e6;
     }
     
-    /* Navigation radio button styling */
+    /* Radio button styling */
     .stRadio > div {
         gap: 0.5rem;
     }
@@ -277,10 +283,9 @@ def main():
     
     # SIDEBAR - Navigation at TOP, Stats below
     with st.sidebar:
-        # Navigation Section - TOP of sidebar (immediately visible)
+        # Navigation Section - TOP of sidebar
         st.markdown("### 🧭 Navigation")
         
-        # Navigation options - shown FIRST
         page = st.radio(
             "",
             ["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced Features"],
@@ -288,12 +293,10 @@ def main():
             index=["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced Features"].index(st.session_state.page)
         )
         
-        # Update session state
         st.session_state.page = page
-        
         st.markdown("---")
         
-        # Market Stats Section - BELOW navigation (requires scroll if content long)
+        # Market Stats Section - BELOW navigation
         st.markdown("### 📊 Market Stats")
         
         total_jobs = len(analyzer.df)
@@ -315,7 +318,7 @@ def main():
         st.markdown("---")
         st.markdown("*Built with ❤️ for Career Success*")
     
-    # Page routing based on session state
+    # Page routing
     if st.session_state.page == "📊 Market Intelligence":
         show_market_intelligence(analyzer)
     elif st.session_state.page == "💡 Skill Gap Analyzer":
@@ -328,7 +331,7 @@ def main():
         show_advanced_features(analyzer, skill_gap_analyzer, career_mapper)
 
 def show_market_intelligence(analyzer):
-    """Market intelligence with non-overlapping charts"""
+    """Market intelligence dashboard"""
     
     st.markdown('<div class="section-title">📈 Market Intelligence Dashboard</div>', unsafe_allow_html=True)
     
@@ -409,22 +412,17 @@ def show_market_intelligence(analyzer):
     
     st.markdown("---")
     
-    # Two column layout for main charts
+    # Two column layout
     col1, col2 = st.columns(2, gap="large")
     
     with col1:
         st.markdown("#### 💼 Top Paying Job Roles")
         top_jobs = analyzer.get_top_paying_jobs(8)
         fig = px.bar(
-            top_jobs, 
-            x='avg_salary', 
-            y=top_jobs.index, 
-            orientation='h',
+            top_jobs, x='avg_salary', y=top_jobs.index, orientation='h',
             title='Average Annual Salary by Role',
             labels={'avg_salary': 'Salary ($)', 'y': ''},
-            color='avg_salary', 
-            color_continuous_scale='Blues',
-            text='avg_salary'
+            color='avg_salary', color_continuous_scale='Blues', text='avg_salary'
         )
         fig.update_traces(texttemplate='${:,.0f}', textposition='outside', textfont=dict(size=11))
         fig.update_layout(height=450, showlegend=False, margin=dict(l=10, r=80, t=50, b=20), plot_bgcolor='rgba(0,0,0,0)')
@@ -434,21 +432,16 @@ def show_market_intelligence(analyzer):
         st.markdown("#### 🎯 Most In-Demand Skills")
         skill_demand = analyzer.get_skills_by_demand(10)
         fig = px.bar(
-            skill_demand, 
-            x='demand_score', 
-            y=skill_demand.index, 
-            orientation='h',
+            skill_demand, x='demand_score', y=skill_demand.index, orientation='h',
             title='Skill Demand Score (0-100)',
             labels={'demand_score': 'Demand Score', 'y': ''},
-            color='demand_score', 
-            color_continuous_scale='Teal',
-            text='demand_score'
+            color='demand_score', color_continuous_scale='Teal', text='demand_score'
         )
         fig.update_traces(texttemplate='%{text:.0f}', textposition='outside', textfont=dict(size=11))
         fig.update_layout(height=450, showlegend=False, margin=dict(l=10, r=50, t=50, b=20), plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig, use_container_width=True)
     
-    # Skills percentage section
+    # Skills percentage
     st.markdown("---")
     st.markdown("#### 📊 Skill Market Penetration")
     
@@ -467,40 +460,13 @@ def show_market_intelligence(analyzer):
     skill_percent_df = skill_percent_df.sort_values('Percentage', ascending=False).head(15)
     
     fig = px.bar(
-        skill_percent_df,
-        x='Percentage',
-        y='Skill',
-        orientation='h',
+        skill_percent_df, x='Percentage', y='Skill', orientation='h',
         title='Top 15 Skills by Market Penetration',
         labels={'Percentage': '% of Job Postings', 'Skill': ''},
-        color='Percentage',
-        color_continuous_scale='Viridis',
-        text='Percentage'
+        color='Percentage', color_continuous_scale='Viridis', text='Percentage'
     )
     fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
     fig.update_layout(height=550, margin=dict(l=10, r=80, t=50, b=20), plot_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # Location distribution
-    st.markdown("---")
-    st.markdown("#### 🗺️ Geographic Distribution")
-    
-    location_stats = analyzer.df.groupby('location').size().reset_index(name='count')
-    location_stats = location_stats.sort_values('count', ascending=False).head(12)
-    
-    fig = px.bar(
-        location_stats, 
-        x='count', 
-        y='location', 
-        orientation='h',
-        title='Top 12 Locations by Job Opportunities',
-        labels={'count': 'Number of Jobs', 'location': ''},
-        color='count',
-        color_continuous_scale='Reds',
-        text='count'
-    )
-    fig.update_traces(texttemplate='%{text:,}', textposition='outside')
-    fig.update_layout(height=450, margin=dict(l=10, r=60, t=50, b=20), plot_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig, use_container_width=True)
 
 def show_skill_gap_analyzer(analyzer, skill_gap_analyzer):
@@ -690,9 +656,7 @@ def show_analytics_hub(analyzer):
     st.markdown("#### 📈 Salary Distribution Analysis")
     
     fig = px.histogram(
-        analyzer.df, 
-        x='avg_salary', 
-        nbins=30,
+        analyzer.df, x='avg_salary', nbins=30,
         title='Salary Distribution Across All Jobs',
         labels={'avg_salary': 'Annual Salary ($)', 'count': 'Number of Jobs'},
         color_discrete_sequence=['#1E88E5']
@@ -701,7 +665,7 @@ def show_analytics_hub(analyzer):
     st.plotly_chart(fig, use_container_width=True)
 
 def show_advanced_features(analyzer, skill_gap_analyzer, career_mapper):
-    """Show advanced features including resume parser and API integration"""
+    """Advanced features including resume parser and API integration"""
     
     st.markdown('<div class="section-title">🚀 Advanced Features</div>', unsafe_allow_html=True)
     
