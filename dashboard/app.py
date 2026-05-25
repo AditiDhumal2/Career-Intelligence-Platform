@@ -1,7 +1,6 @@
 """
 Career Intelligence Platform - Complete Dashboard
-With Resume Parser, API Integration, and Advanced Features
-Mobile-Optimized with Fixed Menu Colors
+Mobile-Optimized with Fixed Navigation Colors
 """
 
 import streamlit as st
@@ -13,6 +12,7 @@ import sys
 import time
 import re
 import os
+from collections import Counter
 
 # Add src to path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -34,22 +34,109 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS with animations and MOBILE FIXES
+# ============================================
+# COMPLETE CSS WITH MOBILE FIXES
+# ============================================
 st.markdown("""
 <style>
-    /* Professional color scheme */
-    :root {
-        --primary: #1E88E5;
-        --secondary: #0D47A1;
-        --accent: #00ACC1;
-        --success: #43A047;
-        --warning: #FB8C00;
-        --danger: #E53935;
-        --dark: #263238;
-        --light: #ECEFF1;
+    /* ---------- RESET & BASE STYLES ---------- */
+    .stApp, .stApp > header, .stApp > div, .main, .block-container {
+        background-color: #ffffff !important;
     }
     
-    /* Keyframe animations */
+    /* ---------- SIDEBAR STYLES - FORCED COLORS ---------- */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #f0f2f6 0%, #e0e4e8 100%) !important;
+        background-color: #f0f2f6 !important;
+        border-right: 1px solid #d0d4d8 !important;
+    }
+    
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        background: transparent !important;
+    }
+    
+    /* ---------- RADIO BUTTON NAVIGATION - CRITICAL FIX ---------- */
+    [data-testid="stRadio"] {
+        background: transparent !important;
+    }
+    
+    [data-testid="stRadio"] > div {
+        gap: 8px !important;
+        background: transparent !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* Radio option labels - This is the KEY fix for mobile */
+    [data-testid="stRadio"] label {
+        background-color: #ffffff !important;
+        border: 1px solid #c0c4c8 !important;
+        border-radius: 12px !important;
+        padding: 12px 16px !important;
+        margin: 4px 0 !important;
+        color: #1E88E5 !important;
+        font-weight: 500 !important;
+        font-size: 14px !important;
+        width: 100% !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+    }
+    
+    /* Radio label text */
+    [data-testid="stRadio"] label p {
+        color: #1E88E5 !important;
+        font-weight: 500 !important;
+        margin: 0 !important;
+    }
+    
+    /* Hover state */
+    [data-testid="stRadio"] label:hover {
+        background-color: #E3F2FD !important;
+        border-color: #1E88E5 !important;
+        transform: translateX(5px) !important;
+    }
+    
+    /* Selected/Active radio option */
+    [data-testid="stRadio"] [data-testid="stMarkdownContainer"] {
+        background: transparent !important;
+    }
+    
+    /* Hide the actual radio circle */
+    [data-testid="stRadio"] div[data-baseweb="radio"] {
+        display: none !important;
+    }
+    
+    /* Active state styling */
+    [data-testid="stRadio"] [aria-checked="true"] + div {
+        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%) !important;
+        border: none !important;
+    }
+    
+    [data-testid="stRadio"] [aria-checked="true"] + div p {
+        color: white !important;
+    }
+    
+    /* ---------- HAMBURGER MENU BUTTON ---------- */
+    [data-testid="collapsedControl"] {
+        background-color: #1E88E5 !important;
+        border-radius: 0 12px 12px 0 !important;
+        padding: 8px 12px !important;
+    }
+    
+    [data-testid="collapsedControl"] svg {
+        fill: white !important;
+    }
+    
+    /* ---------- HEADER & TOOLBAR ---------- */
+    [data-testid="stHeader"] {
+        background-color: #ffffff !important;
+    }
+    
+    [data-testid="stToolbar"] {
+        background-color: #ffffff !important;
+    }
+    
+    /* ---------- ANIMATIONS ---------- */
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(30px); }
         to { opacity: 1; transform: translateY(0); }
@@ -71,7 +158,7 @@ st.markdown("""
         100% { transform: scale(1); opacity: 1; }
     }
     
-    /* Header animations */
+    /* ---------- HEADER STYLES ---------- */
     .main-header {
         font-size: 2.5rem;
         background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
@@ -101,7 +188,7 @@ st.markdown("""
         animation: slideInLeft 0.6s ease-out;
     }
     
-    /* Metric cards */
+    /* ---------- METRIC CARDS ---------- */
     .metric-card {
         background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
         padding: 1rem;
@@ -137,7 +224,7 @@ st.markdown("""
         opacity: 0.8;
     }
     
-    /* Info boxes */
+    /* ---------- INFO BOXES ---------- */
     .info-box {
         background: #E3F2FD;
         padding: 1rem;
@@ -167,7 +254,7 @@ st.markdown("""
         transform: translateX(5px);
     }
     
-    /* Skill badges */
+    /* ---------- SKILL BADGES ---------- */
     .skill-badge {
         display: inline-block;
         background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
@@ -187,7 +274,7 @@ st.markdown("""
         box-shadow: 0 5px 15px rgba(30,136,229,0.4);
     }
     
-    /* Buttons */
+    /* ---------- BUTTONS ---------- */
     .stButton > button {
         background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
         color: white;
@@ -204,37 +291,7 @@ st.markdown("""
         animation: pulse 0.5s;
     }
     
-    /* Sidebar styling */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
-        border-right: 1px solid #dee2e6;
-    }
-    
-    /* Navigation radio button styling - DESKTOP */
-    .stRadio > div {
-        gap: 0.5rem;
-        background: transparent !important;
-    }
-    
-    .stRadio label {
-        padding: 0.6rem 1rem;
-        border-radius: 10px;
-        transition: all 0.3s ease;
-        background: white;
-        color: #1E88E5;
-        font-weight: 500;
-        border: 1px solid #e0e0e0;
-        margin: 4px 0;
-        width: 100%;
-    }
-    
-    .stRadio label:hover {
-        background: #E3F2FD;
-        transform: translateX(5px);
-        border-color: #1E88E5;
-    }
-    
-    /* Stats panel */
+    /* ---------- STATS PANEL ---------- */
     .stats-panel {
         background: white;
         border-radius: 12px;
@@ -243,118 +300,40 @@ st.markdown("""
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     
-    /* Chart containers */
-    .chart-container {
-        animation: fadeInUp 0.7s ease-out;
-        background: white;
-        border-radius: 12px;
-        padding: 0.5rem;
-    }
-    
-    /* ============================================ */
-    /* MOBILE FIXES - Forces colors on all devices */
-    /* ============================================ */
-    
-    /* Force sidebar background on all devices */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%) !important;
-    }
-    
-    /* Radio button styling - mobile override */
-    div[data-testid="stRadio"] label {
-        background-color: white !important;
-        color: #1E88E5 !important;
-        border: 1px solid #dee2e6 !important;
-        padding: 10px 15px !important;
-        border-radius: 10px !important;
-        margin: 5px 0 !important;
-        width: 100% !important;
-    }
-    
-    div[data-testid="stRadio"] label p {
-        color: #1E88E5 !important;
-        font-weight: 500 !important;
-    }
-    
-    /* Selected radio button */
-    div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] {
-        background: transparent !important;
-    }
-    
-    /* Active radio button styling */
-    .stRadio [data-baseweb="radio"]:checked + div {
-        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%) !important;
-        color: white !important;
-        border: none !important;
-    }
-    
-    /* Hamburger menu button */
-    [data-testid="collapsedControl"] {
-        background: #1E88E5 !important;
-        border-radius: 0 10px 10px 0 !important;
-        padding: 5px !important;
-    }
-    
-    [data-testid="collapsedControl"] svg {
-        fill: white !important;
-    }
-    
-    /* Mobile-specific media query */
+    /* ---------- MOBILE SPECIFIC ---------- */
     @media (max-width: 768px) {
-        /* Main content padding */
-        .main .block-container {
-            padding: 1rem !important;
+        .main-header {
+            font-size: 1.6rem !important;
         }
         
-        /* Metric cards on mobile */
-        .metric-card {
-            margin: 5px !important;
-            padding: 8px !important;
+        .sub-header {
+            font-size: 0.7rem !important;
+        }
+        
+        .section-title {
+            font-size: 1.2rem !important;
         }
         
         .metric-card h2 {
-            font-size: 1.2rem !important;
+            font-size: 1rem !important;
         }
         
         .metric-card h3 {
             font-size: 0.7rem !important;
         }
         
-        /* Section titles on mobile */
-        .section-title {
-            font-size: 1.2rem !important;
+        .metric-card p {
+            font-size: 0.6rem !important;
         }
         
-        /* Main header on mobile */
-        .main-header {
-            font-size: 1.8rem !important;
+        [data-testid="stRadio"] label {
+            padding: 10px 14px !important;
+            font-size: 13px !important;
         }
         
-        .sub-header {
-            font-size: 0.8rem !important;
-        }
-        
-        /* Radio buttons on mobile - bigger touch targets */
-        div[data-testid="stRadio"] label {
-            padding: 12px 15px !important;
-            margin: 8px 0 !important;
-        }
-        
-        /* Sidebar on mobile */
-        [data-testid="stSidebar"] {
-            background: #f8f9fa !important;
-        }
-        
-        /* Stats panel on mobile */
-        .stats-panel {
-            padding: 0.8rem !important;
-        }
-        
-        /* Skill badges on mobile */
         .skill-badge {
             padding: 3px 10px !important;
-            font-size: 11px !important;
-            margin: 3px !important;
+            font-size: 10px !important;
         }
     }
 </style>
@@ -391,47 +370,45 @@ def main():
         st.info("Run: python data/generate_large_dataset.py")
         return
     
-    # SIDEBAR - Navigation at TOP, Stats below
+    # SIDEBAR
     with st.sidebar:
-        # Navigation Section - TOP of sidebar
-        st.markdown("### 🧭 Navigation")
+        # Logo/Title
+        st.markdown("### 🎯 Career Navigator")
+        st.markdown("*Your personal career intelligence assistant*")
+        st.markdown("---")
         
-        # Navigation options - using radio with custom styling
-        page = st.radio(
+        # Navigation - Using radio
+        selected_page = st.radio(
             "",
             ["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced Features"],
+            key="main_navigation",
             label_visibility="collapsed",
             index=["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced Features"].index(st.session_state.page)
         )
         
         # Update session state
-        st.session_state.page = page
+        st.session_state.page = selected_page
         
         st.markdown("---")
         
-        # Market Stats Section - BELOW navigation
+        # Market Stats
         st.markdown("### 📊 Market Stats")
         
         total_jobs = len(analyzer.df)
         unique_skills = analyzer.df['skill_required'].nunique()
         unique_roles = analyzer.df['job_title'].nunique()
         
-        st.markdown(f"""
-        <div class="stats-panel">
-            <p><strong>📈 Jobs Analyzed:</strong><br>{total_jobs:,}</p>
-            <p><strong>🎨 Unique Skills:</strong><br>{unique_skills:,}</p>
-            <p><strong>💼 Job Roles:</strong><br>{unique_roles:,}</p>
-            <p><strong>📍 Locations:</strong><br>{analyzer.df['location'].nunique()}</p>
-            <hr>
-            <p><strong>💰 Avg Salary:</strong><br>${analyzer.df['avg_salary'].mean():,.0f}</p>
-            <p><strong>📈 Avg Demand:</strong><br>{analyzer.df['demand_score'].mean():.0f}/100</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.metric("Jobs Analyzed", f"{total_jobs:,}")
+        st.metric("Unique Skills", f"{unique_skills:,}")
+        st.metric("Job Roles", f"{unique_roles:,}")
+        st.metric("Locations", f"{analyzer.df['location'].nunique()}")
+        st.metric("Avg Salary", f"${analyzer.df['avg_salary'].mean():,.0f}")
+        st.metric("Avg Demand", f"{analyzer.df['demand_score'].mean():.0f}/100")
         
         st.markdown("---")
         st.markdown("*Built with ❤️ for Career Success*")
     
-    # Page routing based on session state
+    # Page routing
     if st.session_state.page == "📊 Market Intelligence":
         show_market_intelligence(analyzer)
     elif st.session_state.page == "💡 Skill Gap Analyzer":
@@ -444,7 +421,7 @@ def main():
         show_advanced_features(analyzer, skill_gap_analyzer, career_mapper)
 
 def show_market_intelligence(analyzer):
-    """Market intelligence with non-overlapping charts"""
+    """Market intelligence dashboard"""
     
     st.markdown('<div class="section-title">📈 Market Intelligence Dashboard</div>', unsafe_allow_html=True)
     
@@ -568,7 +545,6 @@ def show_market_intelligence(analyzer):
     st.markdown("---")
     st.markdown("#### 📊 Skill Market Penetration")
     
-    from collections import Counter
     all_skills = []
     for skills in analyzer.df['skill_required']:
         if isinstance(skills, str):
