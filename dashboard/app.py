@@ -1,10 +1,11 @@
 """
 Career Intelligence Platform - Complete Dashboard
+With Resume Parser, API Integration, and Advanced Features
+Mobile-Optimized with Fixed Menu Colors
 """
 
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from pathlib import Path
@@ -16,17 +17,11 @@ import os
 # Add src to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-# Import local modules with error handling
-try:
-    from src.job_analyzer import JobMarketAnalyzer
-    from src.skill_gap_analyzer import SkillGapAnalyzer
-    from src.career_path_mapper import CareerPathMapper
-    from src.resume_parser import ResumeParser
-    from src.job_scraper import RealTimeJobScraper
-except ImportError as e:
-    st.error(f"⚠️ Error importing modules: {e}")
-    st.info("Make sure all src files are present in the repository")
-    sys.exit(1)
+from src.job_analyzer import JobMarketAnalyzer
+from src.skill_gap_analyzer import SkillGapAnalyzer
+from src.career_path_mapper import CareerPathMapper
+from src.resume_parser import ResumeParser
+from src.job_scraper import RealTimeJobScraper
 
 # Fix for PyArrow regex issue
 pd.options.mode.string_storage = 'python'
@@ -39,7 +34,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS with animations
+# Custom CSS with animations and MOBILE FIXES
 st.markdown("""
 <style>
     /* Professional color scheme */
@@ -215,20 +210,37 @@ st.markdown("""
         border-right: 1px solid #dee2e6;
     }
     
-    /* Radio button styling */
+    /* Navigation radio button styling - DESKTOP */
     .stRadio > div {
         gap: 0.5rem;
+        background: transparent !important;
     }
     
     .stRadio label {
-        padding: 0.5rem 1rem;
+        padding: 0.6rem 1rem;
         border-radius: 10px;
         transition: all 0.3s ease;
+        background: white;
+        color: #1E88E5;
+        font-weight: 500;
+        border: 1px solid #e0e0e0;
+        margin: 4px 0;
+        width: 100%;
     }
     
     .stRadio label:hover {
         background: #E3F2FD;
         transform: translateX(5px);
+        border-color: #1E88E5;
+    }
+    
+    /* Stats panel */
+    .stats-panel {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-top: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     
     /* Chart containers */
@@ -239,13 +251,111 @@ st.markdown("""
         padding: 0.5rem;
     }
     
-    /* Stats panel */
-    .stats-panel {
-        background: white;
-        border-radius: 12px;
-        padding: 1rem;
-        margin-top: 1rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    /* ============================================ */
+    /* MOBILE FIXES - Forces colors on all devices */
+    /* ============================================ */
+    
+    /* Force sidebar background on all devices */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    }
+    
+    /* Radio button styling - mobile override */
+    div[data-testid="stRadio"] label {
+        background-color: white !important;
+        color: #1E88E5 !important;
+        border: 1px solid #dee2e6 !important;
+        padding: 10px 15px !important;
+        border-radius: 10px !important;
+        margin: 5px 0 !important;
+        width: 100% !important;
+    }
+    
+    div[data-testid="stRadio"] label p {
+        color: #1E88E5 !important;
+        font-weight: 500 !important;
+    }
+    
+    /* Selected radio button */
+    div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] {
+        background: transparent !important;
+    }
+    
+    /* Active radio button styling */
+    .stRadio [data-baseweb="radio"]:checked + div {
+        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%) !important;
+        color: white !important;
+        border: none !important;
+    }
+    
+    /* Hamburger menu button */
+    [data-testid="collapsedControl"] {
+        background: #1E88E5 !important;
+        border-radius: 0 10px 10px 0 !important;
+        padding: 5px !important;
+    }
+    
+    [data-testid="collapsedControl"] svg {
+        fill: white !important;
+    }
+    
+    /* Mobile-specific media query */
+    @media (max-width: 768px) {
+        /* Main content padding */
+        .main .block-container {
+            padding: 1rem !important;
+        }
+        
+        /* Metric cards on mobile */
+        .metric-card {
+            margin: 5px !important;
+            padding: 8px !important;
+        }
+        
+        .metric-card h2 {
+            font-size: 1.2rem !important;
+        }
+        
+        .metric-card h3 {
+            font-size: 0.7rem !important;
+        }
+        
+        /* Section titles on mobile */
+        .section-title {
+            font-size: 1.2rem !important;
+        }
+        
+        /* Main header on mobile */
+        .main-header {
+            font-size: 1.8rem !important;
+        }
+        
+        .sub-header {
+            font-size: 0.8rem !important;
+        }
+        
+        /* Radio buttons on mobile - bigger touch targets */
+        div[data-testid="stRadio"] label {
+            padding: 12px 15px !important;
+            margin: 8px 0 !important;
+        }
+        
+        /* Sidebar on mobile */
+        [data-testid="stSidebar"] {
+            background: #f8f9fa !important;
+        }
+        
+        /* Stats panel on mobile */
+        .stats-panel {
+            padding: 0.8rem !important;
+        }
+        
+        /* Skill badges on mobile */
+        .skill-badge {
+            padding: 3px 10px !important;
+            font-size: 11px !important;
+            margin: 3px !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -286,6 +396,7 @@ def main():
         # Navigation Section - TOP of sidebar
         st.markdown("### 🧭 Navigation")
         
+        # Navigation options - using radio with custom styling
         page = st.radio(
             "",
             ["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced Features"],
@@ -293,7 +404,9 @@ def main():
             index=["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced Features"].index(st.session_state.page)
         )
         
+        # Update session state
         st.session_state.page = page
+        
         st.markdown("---")
         
         # Market Stats Section - BELOW navigation
@@ -318,7 +431,7 @@ def main():
         st.markdown("---")
         st.markdown("*Built with ❤️ for Career Success*")
     
-    # Page routing
+    # Page routing based on session state
     if st.session_state.page == "📊 Market Intelligence":
         show_market_intelligence(analyzer)
     elif st.session_state.page == "💡 Skill Gap Analyzer":
@@ -331,7 +444,7 @@ def main():
         show_advanced_features(analyzer, skill_gap_analyzer, career_mapper)
 
 def show_market_intelligence(analyzer):
-    """Market intelligence dashboard"""
+    """Market intelligence with non-overlapping charts"""
     
     st.markdown('<div class="section-title">📈 Market Intelligence Dashboard</div>', unsafe_allow_html=True)
     
@@ -412,17 +525,22 @@ def show_market_intelligence(analyzer):
     
     st.markdown("---")
     
-    # Two column layout
+    # Two column layout for main charts
     col1, col2 = st.columns(2, gap="large")
     
     with col1:
         st.markdown("#### 💼 Top Paying Job Roles")
         top_jobs = analyzer.get_top_paying_jobs(8)
         fig = px.bar(
-            top_jobs, x='avg_salary', y=top_jobs.index, orientation='h',
+            top_jobs, 
+            x='avg_salary', 
+            y=top_jobs.index, 
+            orientation='h',
             title='Average Annual Salary by Role',
             labels={'avg_salary': 'Salary ($)', 'y': ''},
-            color='avg_salary', color_continuous_scale='Blues', text='avg_salary'
+            color='avg_salary', 
+            color_continuous_scale='Blues',
+            text='avg_salary'
         )
         fig.update_traces(texttemplate='${:,.0f}', textposition='outside', textfont=dict(size=11))
         fig.update_layout(height=450, showlegend=False, margin=dict(l=10, r=80, t=50, b=20), plot_bgcolor='rgba(0,0,0,0)')
@@ -432,16 +550,21 @@ def show_market_intelligence(analyzer):
         st.markdown("#### 🎯 Most In-Demand Skills")
         skill_demand = analyzer.get_skills_by_demand(10)
         fig = px.bar(
-            skill_demand, x='demand_score', y=skill_demand.index, orientation='h',
+            skill_demand, 
+            x='demand_score', 
+            y=skill_demand.index, 
+            orientation='h',
             title='Skill Demand Score (0-100)',
             labels={'demand_score': 'Demand Score', 'y': ''},
-            color='demand_score', color_continuous_scale='Teal', text='demand_score'
+            color='demand_score', 
+            color_continuous_scale='Teal',
+            text='demand_score'
         )
         fig.update_traces(texttemplate='%{text:.0f}', textposition='outside', textfont=dict(size=11))
         fig.update_layout(height=450, showlegend=False, margin=dict(l=10, r=50, t=50, b=20), plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig, use_container_width=True)
     
-    # Skills percentage
+    # Skills percentage section
     st.markdown("---")
     st.markdown("#### 📊 Skill Market Penetration")
     
@@ -460,13 +583,40 @@ def show_market_intelligence(analyzer):
     skill_percent_df = skill_percent_df.sort_values('Percentage', ascending=False).head(15)
     
     fig = px.bar(
-        skill_percent_df, x='Percentage', y='Skill', orientation='h',
+        skill_percent_df,
+        x='Percentage',
+        y='Skill',
+        orientation='h',
         title='Top 15 Skills by Market Penetration',
         labels={'Percentage': '% of Job Postings', 'Skill': ''},
-        color='Percentage', color_continuous_scale='Viridis', text='Percentage'
+        color='Percentage',
+        color_continuous_scale='Viridis',
+        text='Percentage'
     )
     fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
     fig.update_layout(height=550, margin=dict(l=10, r=80, t=50, b=20), plot_bgcolor='rgba(0,0,0,0)')
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Location distribution
+    st.markdown("---")
+    st.markdown("#### 🗺️ Geographic Distribution")
+    
+    location_stats = analyzer.df.groupby('location').size().reset_index(name='count')
+    location_stats = location_stats.sort_values('count', ascending=False).head(12)
+    
+    fig = px.bar(
+        location_stats, 
+        x='count', 
+        y='location', 
+        orientation='h',
+        title='Top 12 Locations by Job Opportunities',
+        labels={'count': 'Number of Jobs', 'location': ''},
+        color='count',
+        color_continuous_scale='Reds',
+        text='count'
+    )
+    fig.update_traces(texttemplate='%{text:,}', textposition='outside')
+    fig.update_layout(height=450, margin=dict(l=10, r=60, t=50, b=20), plot_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig, use_container_width=True)
 
 def show_skill_gap_analyzer(analyzer, skill_gap_analyzer):
@@ -656,7 +806,9 @@ def show_analytics_hub(analyzer):
     st.markdown("#### 📈 Salary Distribution Analysis")
     
     fig = px.histogram(
-        analyzer.df, x='avg_salary', nbins=30,
+        analyzer.df, 
+        x='avg_salary', 
+        nbins=30,
         title='Salary Distribution Across All Jobs',
         labels={'avg_salary': 'Annual Salary ($)', 'count': 'Number of Jobs'},
         color_discrete_sequence=['#1E88E5']
@@ -665,7 +817,7 @@ def show_analytics_hub(analyzer):
     st.plotly_chart(fig, use_container_width=True)
 
 def show_advanced_features(analyzer, skill_gap_analyzer, career_mapper):
-    """Advanced features including resume parser and API integration"""
+    """Show advanced features including resume parser and API integration"""
     
     st.markdown('<div class="section-title">🚀 Advanced Features</div>', unsafe_allow_html=True)
     
