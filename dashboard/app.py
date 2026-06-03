@@ -1,6 +1,7 @@
 """
 Career Intelligence Platform - Complete Dashboard
 Mobile-Optimized with Fixed Navigation Colors
+All deprecated parameters updated for Streamlit 1.58+
 """
 
 import streamlit as st
@@ -26,7 +27,7 @@ from src.job_scraper import RealTimeJobScraper
 # Fix for PyArrow regex issue
 pd.options.mode.string_storage = 'python'
 
-# Page configuration
+# Page configuration - MUST BE FIRST STREAMLIT COMMAND
 st.set_page_config(
     page_title="Career Intelligence Platform",
     page_icon="🎯",
@@ -67,7 +68,7 @@ st.markdown("""
         flex-direction: column !important;
     }
     
-    /* Radio option labels - This is the KEY fix for mobile */
+    /* Radio option labels - KEY fix for mobile */
     [data-testid="stRadio"] label {
         background-color: #ffffff !important;
         border: 1px solid #c0c4c8 !important;
@@ -94,11 +95,6 @@ st.markdown("""
         background-color: #E3F2FD !important;
         border-color: #1E88E5 !important;
         transform: translateX(5px) !important;
-    }
-    
-    /* Selected/Active radio option */
-    [data-testid="stRadio"] [data-testid="stMarkdownContainer"] {
-        background: transparent !important;
     }
     
     /* Hide the actual radio circle */
@@ -377,12 +373,12 @@ def main():
         st.markdown("*Your personal career intelligence assistant*")
         st.markdown("---")
         
-        # Navigation - Using radio
+        # Navigation - FIXED: Added proper label (not empty)
         selected_page = st.radio(
-            "",
+            "Navigation Menu",  # ✅ FIXED: Added proper label (was empty string)
             ["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced Features"],
             key="main_navigation",
-            label_visibility="collapsed",
+            label_visibility="collapsed",  # Hide label visually but keep for accessibility
             index=["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced Features"].index(st.session_state.page)
         )
         
@@ -611,9 +607,10 @@ def show_skill_gap_analyzer(analyzer, skill_gap_analyzer):
     with col1:
         st.markdown("#### 👤 Your Current Skills")
         user_skills_input = st.text_area(
-            "",
+            "Enter your skills",
             placeholder="Enter your skills (comma-separated)\nExample: Python, SQL, Excel, Machine Learning",
-            height=120
+            height=120,
+            label_visibility="collapsed"
         )
         user_skills = [s.strip().title() for s in user_skills_input.split(',')] if user_skills_input else []
         
@@ -705,7 +702,7 @@ def show_career_path_mapper(career_mapper):
         st.markdown("#### 🎯 Dream Position")
         target_role = st.selectbox("Where do you want to go?", all_roles, index=min(3, len(all_roles)-1))
     
-    if st.button("🚀 Generate Career Path", type="primary", use_container_width=True):
+    if st.button("🚀 Generate Career Path", width="stretch", type="primary"):
         with st.spinner('🗺️ Mapping your career journey...'):
             time.sleep(0.5)
             
@@ -901,7 +898,7 @@ def show_real_time_jobs(analyzer):
     </div>
     """, unsafe_allow_html=True)
     
-    if st.button("🔄 Fetch Latest Jobs", type="primary"):
+    if st.button("🔄 Fetch Latest Jobs", width="stretch", type="primary"):
         with st.spinner("Fetching real-time job data from APIs..."):
             scraper = RealTimeJobScraper()
             jobs_df = scraper.fetch_all_free_jobs(limit_per_source=20)
@@ -910,7 +907,7 @@ def show_real_time_jobs(analyzer):
                 st.success(f"✅ Fetched {len(jobs_df)} real-time jobs!")
                 st.dataframe(jobs_df[['job_title', 'company', 'location', 'source']])
                 
-                if st.button("📊 Merge with Existing Dataset"):
+                if st.button("📊 Merge with Existing Dataset", width="stretch"):
                     combined = scraper.merge_with_existing_data(analyzer.df, refresh_data=False)
                     st.info(f"📊 Combined dataset now has {len(combined)} jobs")
                     st.session_state.merged_data = combined
