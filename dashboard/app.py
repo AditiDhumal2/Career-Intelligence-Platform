@@ -2,6 +2,7 @@
 Career Intelligence Platform - Complete Dashboard
 Mobile-Optimized with Fixed Navigation Colors
 All deprecated parameters updated for Streamlit 1.58+
+Full text visibility fix for Career Path Mapper and all sections
 """
 
 import streamlit as st
@@ -36,16 +37,195 @@ st.set_page_config(
 )
 
 # ============================================
-# COMPLETE CSS WITH MOBILE FIXES
+# COMPLETE CSS WITH FULL TEXT VISIBILITY FIX
 # ============================================
 st.markdown("""
 <style>
-    /* ---------- RESET & BASE STYLES ---------- */
+    /* ---------- FORCE TEXT VISIBILITY ON ALL ELEMENTS ---------- */
+    /* Make ALL text dark and readable */
+    .stApp, .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
+    .stApp label, .stApp div, .stApp span, .stApp li, .stApp .markdown-text-container,
+    .stApp .stMarkdown, .stApp .stText, .stApp .stCaption {
+        color: #1a1a2e !important;
+    }
+    
+    /* Sidebar text - dark color for readability */
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] h4,
+    [data-testid="stSidebar"] h5,
+    [data-testid="stSidebar"] h6,
+    [data-testid="stSidebar"] div,
+    [data-testid="stSidebar"] span {
+        color: #1a1a2e !important;
+    }
+    
+    /* Metric cards - text should be white on dark bg */
+    .metric-card h3, .metric-card h2, .metric-card p {
+        color: white !important;
+    }
+    
+    /* Radio button labels - dark blue text */
+    [data-testid="stRadio"] label p {
+        color: #1E88E5 !important;
+        font-weight: 500 !important;
+    }
+    
+    /* Selected radio button - white text on dark bg */
+    [data-testid="stRadio"] [aria-checked="true"] + div p {
+        color: white !important;
+    }
+    
+    /* ---------- SECTION TITLES ---------- */
+    .section-title {
+        color: #1E88E5 !important;
+        font-weight: 700 !important;
+        font-size: 1.5rem !important;
+    }
+    
+    /* ---------- HEADER ---------- */
+    .main-header {
+        font-size: 2.5rem;
+        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        animation: fadeInUp 0.8s ease-out;
+    }
+    
+    .sub-header {
+        font-size: 1rem;
+        color: #546E7A !important;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+    
+    /* ---------- BUTTONS ---------- */
+    .stButton > button {
+        color: white !important;
+        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%) !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 0.6rem 1.8rem !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .stButton > button p {
+        color: white !important;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 20px rgba(30,136,229,0.4) !important;
+        animation: pulse 0.5s;
+    }
+    
+    /* ---------- SELECTBOX, TEXT INPUT, TEXT AREA ---------- */
+    .stSelectbox label, .stTextInput label, .stTextArea label {
+        color: #1a1a2e !important;
+        font-weight: 500 !important;
+    }
+    
+    .stSelectbox div[data-baseweb="select"] div {
+        color: #1a1a2e !important;
+    }
+    
+    .stTextArea textarea {
+        color: #1a1a2e !important;
+    }
+    
+    /* ---------- METRIC DISPLAYS ---------- */
+    [data-testid="stMetricValue"] {
+        color: #1a1a2e !important;
+        font-weight: 700 !important;
+    }
+    
+    [data-testid="stMetricLabel"] {
+        color: #546E7A !important;
+    }
+    
+    /* ---------- INFO/SUCCESS/ERROR BOXES ---------- */
+    .info-box, .info-box p {
+        color: #1a1a2e !important;
+    }
+    
+    .success-box, .success-box p {
+        color: #1a1a2e !important;
+    }
+    
+    .stAlert p {
+        color: #1a1a2e !important;
+    }
+    
+    /* ---------- STATS PANEL ---------- */
+    .stats-panel p, .stats-panel strong {
+        color: #1a1a2e !important;
+    }
+    
+    /* ---------- DATA FRAME ---------- */
+    .stDataFrame, .stDataFrame div, .stDataFrame td, .stDataFrame th,
+    .stDataFrame .dataframe {
+        color: #1a1a2e !important;
+    }
+    
+    .stDataFrame th {
+        background-color: #f0f2f6 !important;
+        color: #1a1a2e !important;
+        font-weight: 600 !important;
+    }
+    
+    /* ---------- PLOTLY CHARTS ---------- */
+    .js-plotly-plot .plotly .main-svg {
+        background: white !important;
+    }
+    
+    /* ---------- EXPANDER ---------- */
+    .streamlit-expanderHeader {
+        color: #1a1a2e !important;
+        font-weight: 500 !important;
+    }
+    
+    .streamlit-expanderContent p {
+        color: #1a1a2e !important;
+    }
+    
+    /* ---------- TABLES ---------- */
+    table, td, th {
+        color: #1a1a2e !important;
+    }
+    
+    /* ---------- CHECKBOX ---------- */
+    .stCheckbox label {
+        color: #1a1a2e !important;
+    }
+    
+    /* ---------- NUMBER INPUT ---------- */
+    .stNumberInput label {
+        color: #1a1a2e !important;
+    }
+    
+    /* ---------- DATE INPUT ---------- */
+    .stDateInput label {
+        color: #1a1a2e !important;
+    }
+    
+    /* ---------- MULTISELECT ---------- */
+    .stMultiSelect label {
+        color: #1a1a2e !important;
+    }
+    
+    /* ---------- RESET & BASE ---------- */
     .stApp, .stApp > header, .stApp > div, .main, .block-container {
         background-color: #ffffff !important;
     }
     
-    /* ---------- SIDEBAR STYLES - FORCED COLORS ---------- */
+    /* ---------- SIDEBAR ---------- */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #f0f2f6 0%, #e0e4e8 100%) !important;
         background-color: #f0f2f6 !important;
@@ -56,7 +236,7 @@ st.markdown("""
         background: transparent !important;
     }
     
-    /* ---------- RADIO BUTTON NAVIGATION - CRITICAL FIX ---------- */
+    /* ---------- RADIO BUTTON NAVIGATION ---------- */
     [data-testid="stRadio"] {
         background: transparent !important;
     }
@@ -68,7 +248,6 @@ st.markdown("""
         flex-direction: column !important;
     }
     
-    /* Radio option labels - KEY fix for mobile */
     [data-testid="stRadio"] label {
         background-color: #ffffff !important;
         border: 1px solid #c0c4c8 !important;
@@ -83,26 +262,22 @@ st.markdown("""
         cursor: pointer !important;
     }
     
-    /* Radio label text */
     [data-testid="stRadio"] label p {
         color: #1E88E5 !important;
         font-weight: 500 !important;
         margin: 0 !important;
     }
     
-    /* Hover state */
     [data-testid="stRadio"] label:hover {
         background-color: #E3F2FD !important;
         border-color: #1E88E5 !important;
         transform: translateX(5px) !important;
     }
     
-    /* Hide the actual radio circle */
     [data-testid="stRadio"] div[data-baseweb="radio"] {
         display: none !important;
     }
     
-    /* Active state styling */
     [data-testid="stRadio"] [aria-checked="true"] + div {
         background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%) !important;
         border: none !important;
@@ -112,7 +287,7 @@ st.markdown("""
         color: white !important;
     }
     
-    /* ---------- HAMBURGER MENU BUTTON ---------- */
+    /* ---------- HAMBURGER MENU ---------- */
     [data-testid="collapsedControl"] {
         background-color: #1E88E5 !important;
         border-radius: 0 12px 12px 0 !important;
@@ -130,58 +305,6 @@ st.markdown("""
     
     [data-testid="stToolbar"] {
         background-color: #ffffff !important;
-    }
-    
-    /* ---------- ANIMATIONS ---------- */
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @keyframes slideInLeft {
-        from { opacity: 0; transform: translateX(-40px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    
-    @keyframes slideInRight {
-        from { opacity: 0; transform: translateX(40px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    
-    @keyframes pulse {
-        0% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.05); opacity: 0.9; }
-        100% { transform: scale(1); opacity: 1; }
-    }
-    
-    /* ---------- HEADER STYLES ---------- */
-    .main-header {
-        font-size: 2.5rem;
-        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-align: center;
-        margin-bottom: 0.5rem;
-        animation: fadeInUp 0.8s ease-out;
-    }
-    
-    .sub-header {
-        font-size: 1rem;
-        color: #546E7A;
-        text-align: center;
-        margin-bottom: 1.5rem;
-        animation: fadeInUp 0.8s ease-out 0.2s both;
-    }
-    
-    .section-title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #1E88E5;
-        margin-top: 0.5rem;
-        margin-bottom: 1.5rem;
-        border-left: 4px solid #1E88E5;
-        padding-left: 1rem;
-        animation: slideInLeft 0.6s ease-out;
     }
     
     /* ---------- METRIC CARDS ---------- */
@@ -206,55 +329,28 @@ st.markdown("""
         margin: 0;
         opacity: 0.9;
         letter-spacing: 1px;
+        color: white !important;
     }
     
     .metric-card h2 {
         font-size: 1.8rem;
         margin: 0.3rem 0;
         font-weight: 700;
+        color: white !important;
     }
     
     .metric-card p {
         font-size: 0.75rem;
         margin: 0;
         opacity: 0.8;
-    }
-    
-    /* ---------- INFO BOXES ---------- */
-    .info-box {
-        background: #E3F2FD;
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 4px solid #1E88E5;
-        margin: 1rem 0;
-        animation: slideInRight 0.5s ease-out;
-        transition: all 0.3s;
-    }
-    
-    .info-box:hover {
-        transform: translateX(5px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    
-    .success-box {
-        background: #E8F5E9;
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 4px solid #43A047;
-        margin: 1rem 0;
-        animation: slideInRight 0.5s ease-out;
-        transition: all 0.3s;
-    }
-    
-    .success-box:hover {
-        transform: translateX(5px);
+        color: white !important;
     }
     
     /* ---------- SKILL BADGES ---------- */
     .skill-badge {
         display: inline-block;
         background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
-        color: white;
+        color: white !important;
         padding: 5px 14px;
         border-radius: 25px;
         margin: 4px;
@@ -270,30 +366,26 @@ st.markdown("""
         box-shadow: 0 5px 15px rgba(30,136,229,0.4);
     }
     
-    /* ---------- BUTTONS ---------- */
-    .stButton > button {
-        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.6rem 1.8rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
+    /* ---------- ANIMATIONS ---------- */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
-    .stButton > button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(30,136,229,0.4);
-        animation: pulse 0.5s;
+    @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-40px); }
+        to { opacity: 1; transform: translateX(0); }
     }
     
-    /* ---------- STATS PANEL ---------- */
-    .stats-panel {
-        background: white;
-        border-radius: 12px;
-        padding: 1rem;
-        margin-top: 1rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(40px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.9; }
+        100% { transform: scale(1); opacity: 1; }
     }
     
     /* ---------- MOBILE SPECIFIC ---------- */
@@ -375,10 +467,10 @@ def main():
         
         # Navigation - FIXED: Added proper label (not empty)
         selected_page = st.radio(
-            "Navigation Menu",  # ✅ FIXED: Added proper label (was empty string)
+            "Navigation Menu",
             ["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced Features"],
             key="main_navigation",
-            label_visibility="collapsed",  # Hide label visually but keep for accessibility
+            label_visibility="collapsed",
             index=["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced Features"].index(st.session_state.page)
         )
         
@@ -680,12 +772,12 @@ def show_skill_gap_analyzer(analyzer, skill_gap_analyzer):
                 st.error(results['error'])
 
 def show_career_path_mapper(career_mapper):
-    """Career path mapper"""
+    """Career path mapper with full text visibility"""
     
     st.markdown('<div class="section-title">🗺️ Career Path Mapper</div>', unsafe_allow_html=True)
     
     st.markdown("""
-    <div class="info-box">
+    <div class="info-box" style="color: #1a1a2e !important;">
         🚀 Plan your career journey! Select your current role and dream role to visualize the complete career roadmap.
     </div>
     """, unsafe_allow_html=True)
