@@ -1,8 +1,7 @@
 """
 Career Intelligence Platform - Complete Dashboard
-Mobile-Optimized with Fixed Navigation Colors
-All deprecated parameters updated for Streamlit 1.58+
-Full text visibility fix for Career Path Mapper and all sections
+FIXED: Chart visibility, text visibility, Career Path Mapper
+All deprecated parameters updated
 """
 
 import streamlit as st
@@ -25,10 +24,49 @@ from src.career_path_mapper import CareerPathMapper
 from src.resume_parser import ResumeParser
 from src.job_scraper import RealTimeJobScraper
 
+# ============================================
+# LLM/AI IMPORTS
+# ============================================
+try:
+    from src.llm_advisor import LLMCareerAdvisor
+    LLM_AVAILABLE = True
+except ImportError:
+    LLM_AVAILABLE = False
+
+try:
+    from src.resume_critic import ResumeCritic
+    RESUME_CRITIC_AVAILABLE = True
+except ImportError:
+    RESUME_CRITIC_AVAILABLE = False
+
+try:
+    from src.interview_prep import InterviewPrep
+    INTERVIEW_PREP_AVAILABLE = True
+except ImportError:
+    INTERVIEW_PREP_AVAILABLE = False
+
+try:
+    from src.market_trends import MarketTrendAnalyzer
+    MARKET_TRENDS_AVAILABLE = True
+except ImportError:
+    MARKET_TRENDS_AVAILABLE = False
+
+try:
+    from src.nlp_query import NLPQueryProcessor
+    NLP_QUERY_AVAILABLE = True
+except ImportError:
+    NLP_QUERY_AVAILABLE = False
+
+try:
+    from src.rag_retriever import RAGRetriever
+    RAG_AVAILABLE = True
+except ImportError:
+    RAG_AVAILABLE = False
+
 # Fix for PyArrow regex issue
 pd.options.mode.string_storage = 'python'
 
-# Page configuration - MUST BE FIRST STREAMLIT COMMAND
+# Page configuration
 st.set_page_config(
     page_title="Career Intelligence Platform",
     page_icon="🎯",
@@ -37,56 +75,51 @@ st.set_page_config(
 )
 
 # ============================================
-# COMPLETE CSS WITH FULL TEXT VISIBILITY FIX
+# FIXED CSS - Full Text Visibility
 # ============================================
 st.markdown("""
 <style>
-    /* ---------- FORCE TEXT VISIBILITY ON ALL ELEMENTS ---------- */
-    /* Make ALL text dark and readable */
-    .stApp, .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
-    .stApp label, .stApp div, .stApp span, .stApp li, .stApp .markdown-text-container,
-    .stApp .stMarkdown, .stApp .stText, .stApp .stCaption {
+    /* Force ALL text to be visible */
+    .stApp, .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, 
+    .stApp label, .stApp div, .stApp span, .stApp li,
+    .stApp .stMarkdown, .stApp .stText, .stApp .stCaption,
+    .stApp .markdown-text-container {
         color: #1a1a2e !important;
     }
     
-    /* Sidebar text - dark color for readability */
+    /* Sidebar text */
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] h1,
-    [data-testid="stSidebar"] h2,
-    [data-testid="stSidebar"] h3,
-    [data-testid="stSidebar"] h4,
-    [data-testid="stSidebar"] h5,
-    [data-testid="stSidebar"] h6,
-    [data-testid="stSidebar"] div,
-    [data-testid="stSidebar"] span {
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3, [data-testid="stSidebar"] h4,
+    [data-testid="stSidebar"] div, [data-testid="stSidebar"] span {
         color: #1a1a2e !important;
     }
     
-    /* Metric cards - text should be white on dark bg */
-    .metric-card h3, .metric-card h2, .metric-card p {
+    /* Metric cards - WHITE text on dark background */
+    .metric-card {
+        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
+        padding: 1rem;
+        border-radius: 12px;
+        text-align: center;
+        color: white !important;
+        transition: all 0.3s ease;
+        animation: fadeInUp 0.6s ease-out;
+    }
+    .metric-card h2, .metric-card h3, .metric-card p {
         color: white !important;
     }
     
-    /* Radio button labels - dark blue text */
-    [data-testid="stRadio"] label p {
-        color: #1E88E5 !important;
-        font-weight: 500 !important;
-    }
-    
-    /* Selected radio button - white text on dark bg */
-    [data-testid="stRadio"] [aria-checked="true"] + div p {
-        color: white !important;
-    }
-    
-    /* ---------- SECTION TITLES ---------- */
+    /* Section titles */
     .section-title {
         color: #1E88E5 !important;
         font-weight: 700 !important;
         font-size: 1.5rem !important;
+        border-left: 4px solid #1E88E5;
+        padding-left: 1rem;
     }
     
-    /* ---------- HEADER ---------- */
+    /* Main header */
     .main-header {
         font-size: 2.5rem;
         background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
@@ -94,7 +127,6 @@ st.markdown("""
         -webkit-text-fill-color: transparent;
         text-align: center;
         margin-bottom: 0.5rem;
-        animation: fadeInUp 0.8s ease-out;
     }
     
     .sub-header {
@@ -102,152 +134,9 @@ st.markdown("""
         color: #546E7A !important;
         text-align: center;
         margin-bottom: 1.5rem;
-        animation: fadeInUp 0.8s ease-out 0.2s both;
     }
     
-    /* ---------- BUTTONS ---------- */
-    .stButton > button {
-        color: white !important;
-        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%) !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 0.6rem 1.8rem !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    .stButton > button p {
-        color: white !important;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-3px) !important;
-        box-shadow: 0 8px 20px rgba(30,136,229,0.4) !important;
-        animation: pulse 0.5s;
-    }
-    
-    /* ---------- SELECTBOX, TEXT INPUT, TEXT AREA ---------- */
-    .stSelectbox label, .stTextInput label, .stTextArea label {
-        color: #1a1a2e !important;
-        font-weight: 500 !important;
-    }
-    
-    .stSelectbox div[data-baseweb="select"] div {
-        color: #1a1a2e !important;
-    }
-    
-    .stTextArea textarea {
-        color: #1a1a2e !important;
-    }
-    
-    /* ---------- METRIC DISPLAYS ---------- */
-    [data-testid="stMetricValue"] {
-        color: #1a1a2e !important;
-        font-weight: 700 !important;
-    }
-    
-    [data-testid="stMetricLabel"] {
-        color: #546E7A !important;
-    }
-    
-    /* ---------- INFO/SUCCESS/ERROR BOXES ---------- */
-    .info-box, .info-box p {
-        color: #1a1a2e !important;
-    }
-    
-    .success-box, .success-box p {
-        color: #1a1a2e !important;
-    }
-    
-    .stAlert p {
-        color: #1a1a2e !important;
-    }
-    
-    /* ---------- STATS PANEL ---------- */
-    .stats-panel p, .stats-panel strong {
-        color: #1a1a2e !important;
-    }
-    
-    /* ---------- DATA FRAME ---------- */
-    .stDataFrame, .stDataFrame div, .stDataFrame td, .stDataFrame th,
-    .stDataFrame .dataframe {
-        color: #1a1a2e !important;
-    }
-    
-    .stDataFrame th {
-        background-color: #f0f2f6 !important;
-        color: #1a1a2e !important;
-        font-weight: 600 !important;
-    }
-    
-    /* ---------- PLOTLY CHARTS ---------- */
-    .js-plotly-plot .plotly .main-svg {
-        background: white !important;
-    }
-    
-    /* ---------- EXPANDER ---------- */
-    .streamlit-expanderHeader {
-        color: #1a1a2e !important;
-        font-weight: 500 !important;
-    }
-    
-    .streamlit-expanderContent p {
-        color: #1a1a2e !important;
-    }
-    
-    /* ---------- TABLES ---------- */
-    table, td, th {
-        color: #1a1a2e !important;
-    }
-    
-    /* ---------- CHECKBOX ---------- */
-    .stCheckbox label {
-        color: #1a1a2e !important;
-    }
-    
-    /* ---------- NUMBER INPUT ---------- */
-    .stNumberInput label {
-        color: #1a1a2e !important;
-    }
-    
-    /* ---------- DATE INPUT ---------- */
-    .stDateInput label {
-        color: #1a1a2e !important;
-    }
-    
-    /* ---------- MULTISELECT ---------- */
-    .stMultiSelect label {
-        color: #1a1a2e !important;
-    }
-    
-    /* ---------- RESET & BASE ---------- */
-    .stApp, .stApp > header, .stApp > div, .main, .block-container {
-        background-color: #ffffff !important;
-    }
-    
-    /* ---------- SIDEBAR ---------- */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #f0f2f6 0%, #e0e4e8 100%) !important;
-        background-color: #f0f2f6 !important;
-        border-right: 1px solid #d0d4d8 !important;
-    }
-    
-    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-        background: transparent !important;
-    }
-    
-    /* ---------- RADIO BUTTON NAVIGATION ---------- */
-    [data-testid="stRadio"] {
-        background: transparent !important;
-    }
-    
-    [data-testid="stRadio"] > div {
-        gap: 8px !important;
-        background: transparent !important;
-        display: flex !important;
-        flex-direction: column !important;
-    }
-    
+    /* Radio buttons */
     [data-testid="stRadio"] label {
         background-color: #ffffff !important;
         border: 1px solid #c0c4c8 !important;
@@ -256,97 +145,81 @@ st.markdown("""
         margin: 4px 0 !important;
         color: #1E88E5 !important;
         font-weight: 500 !important;
-        font-size: 14px !important;
         width: 100% !important;
-        transition: all 0.2s ease !important;
         cursor: pointer !important;
     }
-    
     [data-testid="stRadio"] label p {
         color: #1E88E5 !important;
         font-weight: 500 !important;
-        margin: 0 !important;
     }
-    
-    [data-testid="stRadio"] label:hover {
-        background-color: #E3F2FD !important;
-        border-color: #1E88E5 !important;
-        transform: translateX(5px) !important;
-    }
-    
-    [data-testid="stRadio"] div[data-baseweb="radio"] {
-        display: none !important;
-    }
-    
     [data-testid="stRadio"] [aria-checked="true"] + div {
         background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%) !important;
         border: none !important;
     }
-    
     [data-testid="stRadio"] [aria-checked="true"] + div p {
         color: white !important;
     }
     
-    /* ---------- HAMBURGER MENU ---------- */
-    [data-testid="collapsedControl"] {
-        background-color: #1E88E5 !important;
-        border-radius: 0 12px 12px 0 !important;
-        padding: 8px 12px !important;
+    /* Buttons */
+    .stButton > button {
+        color: white !important;
+        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%) !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 0.6rem 1.8rem !important;
+        font-weight: 600 !important;
+    }
+    .stButton > button p {
+        color: white !important;
     }
     
-    [data-testid="collapsedControl"] svg {
-        fill: white !important;
+    /* Info boxes */
+    .info-box {
+        background: #E3F2FD !important;
+        padding: 1rem !important;
+        border-radius: 10px !important;
+        border-left: 4px solid #1E88E5 !important;
+        margin: 1rem 0 !important;
+        color: #1a1a2e !important;
+    }
+    .info-box p {
+        color: #1a1a2e !important;
     }
     
-    /* ---------- HEADER & TOOLBAR ---------- */
-    [data-testid="stHeader"] {
+    /* Success boxes */
+    .success-box {
+        background: #E8F5E9 !important;
+        padding: 1rem !important;
+        border-radius: 10px !important;
+        border-left: 4px solid #43A047 !important;
+        margin: 1rem 0 !important;
+        color: #1a1a2e !important;
+    }
+    .success-box p {
+        color: #1a1a2e !important;
+    }
+    
+    /* Metrics */
+    [data-testid="stMetricValue"] {
+        color: #1a1a2e !important;
+        font-weight: 700 !important;
+    }
+    [data-testid="stMetricLabel"] {
+        color: #546E7A !important;
+    }
+    
+    /* Sidebar background */
+    [data-testid="stSidebar"] {
+        background: #f0f2f6 !important;
+        border-right: 1px solid #d0d4d8 !important;
+    }
+    
+    /* App background */
+    .stApp, .stApp > header, .stApp > div, .main, .block-container {
         background-color: #ffffff !important;
     }
     
-    [data-testid="stToolbar"] {
-        background-color: #ffffff !important;
-    }
-    
-    /* ---------- METRIC CARDS ---------- */
-    .metric-card {
-        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
-        padding: 1rem;
-        border-radius: 12px;
-        text-align: center;
-        color: white;
-        transition: all 0.3s ease;
-        animation: fadeInUp 0.6s ease-out;
-    }
-    
-    .metric-card:hover {
-        transform: translateY(-5px);
-        animation: pulse 0.5s ease;
-        box-shadow: 0 10px 25px rgba(30,136,229,0.3);
-    }
-    
-    .metric-card h3 {
-        font-size: 0.85rem;
-        margin: 0;
-        opacity: 0.9;
-        letter-spacing: 1px;
-        color: white !important;
-    }
-    
-    .metric-card h2 {
-        font-size: 1.8rem;
-        margin: 0.3rem 0;
-        font-weight: 700;
-        color: white !important;
-    }
-    
-    .metric-card p {
-        font-size: 0.75rem;
-        margin: 0;
-        opacity: 0.8;
-        color: white !important;
-    }
-    
-    /* ---------- SKILL BADGES ---------- */
+    /* Skill badges */
     .skill-badge {
         display: inline-block;
         background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
@@ -356,82 +229,34 @@ st.markdown("""
         margin: 4px;
         font-size: 13px;
         font-weight: 500;
-        transition: all 0.3s ease;
-        animation: fadeInUp 0.4s ease-out;
         cursor: pointer;
     }
     
-    .skill-badge:hover {
-        transform: scale(1.08) translateY(-2px);
-        box-shadow: 0 5px 15px rgba(30,136,229,0.4);
-    }
-    
-    /* ---------- ANIMATIONS ---------- */
+    /* Animations */
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(30px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    
     @keyframes slideInLeft {
         from { opacity: 0; transform: translateX(-40px); }
         to { opacity: 1; transform: translateX(0); }
     }
-    
     @keyframes slideInRight {
         from { opacity: 0; transform: translateX(40px); }
         to { opacity: 1; transform: translateX(0); }
     }
-    
     @keyframes pulse {
         0% { transform: scale(1); opacity: 1; }
         50% { transform: scale(1.05); opacity: 0.9; }
         100% { transform: scale(1); opacity: 1; }
     }
-    
-    /* ---------- MOBILE SPECIFIC ---------- */
-    @media (max-width: 768px) {
-        .main-header {
-            font-size: 1.6rem !important;
-        }
-        
-        .sub-header {
-            font-size: 0.7rem !important;
-        }
-        
-        .section-title {
-            font-size: 1.2rem !important;
-        }
-        
-        .metric-card h2 {
-            font-size: 1rem !important;
-        }
-        
-        .metric-card h3 {
-            font-size: 0.7rem !important;
-        }
-        
-        .metric-card p {
-            font-size: 0.6rem !important;
-        }
-        
-        [data-testid="stRadio"] label {
-            padding: 10px 14px !important;
-            font-size: 13px !important;
-        }
-        
-        .skill-badge {
-            padding: 3px 10px !important;
-            font-size: 10px !important;
-        }
-    }
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize session state for navigation
+# Initialize session state
 if 'page' not in st.session_state:
     st.session_state.page = "📊 Market Intelligence"
 
-# Initialize components
 @st.cache_resource
 def load_components():
     """Load all analyzers with caching"""
@@ -460,28 +285,22 @@ def main():
     
     # SIDEBAR
     with st.sidebar:
-        # Logo/Title
         st.markdown("### 🎯 Career Navigator")
         st.markdown("*Your personal career intelligence assistant*")
         st.markdown("---")
         
-        # Navigation - FIXED: Added proper label (not empty)
         selected_page = st.radio(
             "Navigation Menu",
-            ["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced Features"],
+            ["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced AI Features"],
             key="main_navigation",
             label_visibility="collapsed",
-            index=["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced Features"].index(st.session_state.page)
+            index=["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced AI Features"].index(st.session_state.page)
         )
-        
-        # Update session state
         st.session_state.page = selected_page
         
         st.markdown("---")
         
-        # Market Stats
         st.markdown("### 📊 Market Stats")
-        
         total_jobs = len(analyzer.df)
         unique_skills = analyzer.df['skill_required'].nunique()
         unique_roles = analyzer.df['job_title'].nunique()
@@ -505,11 +324,14 @@ def main():
         show_career_path_mapper(career_mapper)
     elif st.session_state.page == "📈 Analytics Hub":
         show_analytics_hub(analyzer)
-    elif st.session_state.page == "🚀 Advanced Features":
-        show_advanced_features(analyzer, skill_gap_analyzer, career_mapper)
+    elif st.session_state.page == "🚀 Advanced AI Features":
+        show_advanced_ai_features(analyzer, skill_gap_analyzer, career_mapper)
 
+# ============================================
+# MARKET INTELLIGENCE - FIXED CHARTS
+# ============================================
 def show_market_intelligence(analyzer):
-    """Market intelligence dashboard"""
+    """Market intelligence dashboard - FIXED chart visibility"""
     
     st.markdown('<div class="section-title">📈 Market Intelligence Dashboard</div>', unsafe_allow_html=True)
     
@@ -575,9 +397,6 @@ def show_market_intelligence(analyzer):
     with col4:
         if 'is_remote_friendly' in df_filtered.columns and len(df_filtered) > 0:
             remote_pct = df_filtered['is_remote_friendly'].mean() * 100
-        elif 'remote_policy' in df_filtered.columns and len(df_filtered) > 0:
-            remote_count = len(df_filtered[df_filtered['remote_policy'].isin(['Remote', 'Hybrid', 'Flexible'])])
-            remote_pct = (remote_count / len(df_filtered) * 100)
         else:
             remote_pct = 0
         st.markdown(f"""
@@ -590,12 +409,16 @@ def show_market_intelligence(analyzer):
     
     st.markdown("---")
     
-    # Two column layout for main charts
+    # ============================================
+    # CHARTS - FIXED VISIBILITY
+    # ============================================
+    
     col1, col2 = st.columns(2, gap="large")
     
     with col1:
         st.markdown("#### 💼 Top Paying Job Roles")
         top_jobs = analyzer.get_top_paying_jobs(8)
+        
         fig = px.bar(
             top_jobs, 
             x='avg_salary', 
@@ -607,13 +430,36 @@ def show_market_intelligence(analyzer):
             color_continuous_scale='Blues',
             text='avg_salary'
         )
-        fig.update_traces(texttemplate='${:,.0f}', textposition='outside', textfont=dict(size=11))
-        fig.update_layout(height=450, showlegend=False, margin=dict(l=10, r=80, t=50, b=20), plot_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig, use_container_width=True)
+        fig.update_traces(
+            texttemplate='${:,.0f}', 
+            textposition='outside',
+            textfont=dict(size=10, color='#1a1a2e'),
+            cliponaxis=False
+        )
+        fig.update_layout(
+            height=450,
+            showlegend=False,
+            xaxis=dict(
+                tickformat='$,.0f',
+                gridcolor='lightgray',
+                title_font=dict(color='#1a1a2e'),
+                tickfont=dict(color='#1a1a2e')
+            ),
+            yaxis=dict(
+                automargin=True,
+                tickfont=dict(color='#1a1a2e', size=11)
+            ),
+            title_font=dict(color='#1a1a2e'),
+            margin=dict(l=10, r=80, t=50, b=20),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)'
+        )
+        st.plotly_chart(fig, width='stretch')
     
     with col2:
         st.markdown("#### 🎯 Most In-Demand Skills")
         skill_demand = analyzer.get_skills_by_demand(10)
+        
         fig = px.bar(
             skill_demand, 
             x='demand_score', 
@@ -625,9 +471,31 @@ def show_market_intelligence(analyzer):
             color_continuous_scale='Teal',
             text='demand_score'
         )
-        fig.update_traces(texttemplate='%{text:.0f}', textposition='outside', textfont=dict(size=11))
-        fig.update_layout(height=450, showlegend=False, margin=dict(l=10, r=50, t=50, b=20), plot_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig, use_container_width=True)
+        fig.update_traces(
+            texttemplate='%{text:.0f}', 
+            textposition='outside',
+            textfont=dict(size=10, color='#1a1a2e'),
+            cliponaxis=False
+        )
+        fig.update_layout(
+            height=450,
+            showlegend=False,
+            xaxis=dict(
+                range=[0, 105],
+                gridcolor='lightgray',
+                title_font=dict(color='#1a1a2e'),
+                tickfont=dict(color='#1a1a2e')
+            ),
+            yaxis=dict(
+                automargin=True,
+                tickfont=dict(color='#1a1a2e', size=11)
+            ),
+            title_font=dict(color='#1a1a2e'),
+            margin=dict(l=10, r=50, t=50, b=20),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)'
+        )
+        st.plotly_chart(fig, width='stretch')
     
     # Skills percentage section
     st.markdown("---")
@@ -657,9 +525,29 @@ def show_market_intelligence(analyzer):
         color_continuous_scale='Viridis',
         text='Percentage'
     )
-    fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-    fig.update_layout(height=550, margin=dict(l=10, r=80, t=50, b=20), plot_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig, use_container_width=True)
+    fig.update_traces(
+        texttemplate='%{text:.1f}%', 
+        textposition='outside',
+        textfont=dict(size=10, color='#1a1a2e'),
+        cliponaxis=False
+    )
+    fig.update_layout(
+        height=550,
+        xaxis=dict(
+            gridcolor='lightgray',
+            title_font=dict(color='#1a1a2e'),
+            tickfont=dict(color='#1a1a2e')
+        ),
+        yaxis=dict(
+            automargin=True,
+            tickfont=dict(color='#1a1a2e', size=11)
+        ),
+        title_font=dict(color='#1a1a2e'),
+        margin=dict(l=10, r=80, t=50, b=20),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+    st.plotly_chart(fig, width='stretch')
     
     # Location distribution
     st.markdown("---")
@@ -679,10 +567,33 @@ def show_market_intelligence(analyzer):
         color_continuous_scale='Reds',
         text='count'
     )
-    fig.update_traces(texttemplate='%{text:,}', textposition='outside')
-    fig.update_layout(height=450, margin=dict(l=10, r=60, t=50, b=20), plot_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig, use_container_width=True)
+    fig.update_traces(
+        texttemplate='%{text:,}', 
+        textposition='outside',
+        textfont=dict(size=10, color='#1a1a2e'),
+        cliponaxis=False
+    )
+    fig.update_layout(
+        height=450,
+        xaxis=dict(
+            gridcolor='lightgray',
+            title_font=dict(color='#1a1a2e'),
+            tickfont=dict(color='#1a1a2e')
+        ),
+        yaxis=dict(
+            automargin=True,
+            tickfont=dict(color='#1a1a2e', size=11)
+        ),
+        title_font=dict(color='#1a1a2e'),
+        margin=dict(l=10, r=60, t=50, b=20),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+    st.plotly_chart(fig, width='stretch')
 
+# ============================================
+# SKILL GAP ANALYZER
+# ============================================
 def show_skill_gap_analyzer(analyzer, skill_gap_analyzer):
     """Interactive skill gap analyzer"""
     
@@ -699,7 +610,7 @@ def show_skill_gap_analyzer(analyzer, skill_gap_analyzer):
     with col1:
         st.markdown("#### 👤 Your Current Skills")
         user_skills_input = st.text_area(
-            "Enter your skills",
+            "",
             placeholder="Enter your skills (comma-separated)\nExample: Python, SQL, Excel, Machine Learning",
             height=120,
             label_visibility="collapsed"
@@ -771,20 +682,28 @@ def show_skill_gap_analyzer(analyzer, skill_gap_analyzer):
             else:
                 st.error(results['error'])
 
+# ============================================
+# CAREER PATH MAPPER - FIXED
+# ============================================
 def show_career_path_mapper(career_mapper):
-    """Career path mapper with full text visibility"""
+    """Career path mapper - FIXED: Shows results properly"""
     
     st.markdown('<div class="section-title">🗺️ Career Path Mapper</div>', unsafe_allow_html=True)
     
     st.markdown("""
-    <div class="info-box" style="color: #1a1a2e !important;">
+    <div class="info-box">
         🚀 Plan your career journey! Select your current role and dream role to visualize the complete career roadmap.
     </div>
     """, unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2)
-    
+    # Get all available roles
     all_roles = career_mapper.get_all_available_roles()
+    
+    if not all_roles:
+        st.error("No career paths available. Please check your data.")
+        return
+    
+    col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("#### 📍 Current Position")
@@ -794,6 +713,7 @@ def show_career_path_mapper(career_mapper):
         st.markdown("#### 🎯 Dream Position")
         target_role = st.selectbox("Where do you want to go?", all_roles, index=min(3, len(all_roles)-1))
     
+    # Use width='stretch' instead of use_container_width
     if st.button("🚀 Generate Career Path", width="stretch", type="primary"):
         with st.spinner('🗺️ Mapping your career journey...'):
             time.sleep(0.5)
@@ -814,25 +734,27 @@ def show_career_path_mapper(career_mapper):
                 
                 st.markdown("---")
                 
+                # Display each step
                 for i, step in enumerate(path_data['path'], 1):
                     with st.container():
-                        col1, col2, col3, col4 = st.columns([1, 3, 2, 2])
+                        st.markdown(f"### Step {i}: {step['role']}")
+                        col1, col2, col3 = st.columns(3)
                         with col1:
-                            st.markdown(f"### Step {i}")
+                            st.markdown(f"💰 **{step['salary']}**")
                         with col2:
-                            st.markdown(f"**{step['role']}**")
+                            st.markdown(f"⏰ **{step['experience']}** years")
                         with col3:
-                            st.markdown(f"💰 {step['salary']}")
-                        with col4:
-                            st.markdown(f"⏰ {step['experience']} years")
+                            st.markdown(f"📋 **Skills:** {', '.join(step['required_skills'][:3])}...")
                         
-                        st.markdown(f"**Required Skills:** {', '.join(step['required_skills'][:5])}")
                         if i < len(path_data['path']):
-                            st.markdown("⬇️ *Next Level* ⬇️")
+                            st.markdown("⬇️ **Next Level**")
                             st.markdown("---")
             else:
                 st.error(path_data['error'])
 
+# ============================================
+# ANALYTICS HUB
+# ============================================
 def show_analytics_hub(analyzer):
     """Analytics hub with insights"""
     
@@ -878,133 +800,245 @@ def show_analytics_hub(analyzer):
         labels={'avg_salary': 'Annual Salary ($)', 'count': 'Number of Jobs'},
         color_discrete_sequence=['#1E88E5']
     )
-    fig.update_layout(height=450, plot_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig, use_container_width=True)
+    fig.update_layout(
+        height=450,
+        plot_bgcolor='rgba(0,0,0,0)',
+        xaxis_tickfont=dict(color='#1a1a2e'),
+        yaxis_tickfont=dict(color='#1a1a2e'),
+        title_font=dict(color='#1a1a2e')
+    )
+    st.plotly_chart(fig, width='stretch')
 
-def show_advanced_features(analyzer, skill_gap_analyzer, career_mapper):
-    """Show advanced features including resume parser and API integration"""
+# ============================================
+# ADVANCED AI FEATURES
+# ============================================
+def show_advanced_ai_features(analyzer, skill_gap_analyzer, career_mapper):
+    """Show all AI-powered features"""
     
-    st.markdown('<div class="section-title">🚀 Advanced Features</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">🚀 Advanced AI Features</div>', unsafe_allow_html=True)
     
-    tab1, tab2 = st.tabs(["📄 Resume Parser", "🌐 Real-Time Jobs API"])
+    tabs = ["💬 AI Advisor"]
     
-    with tab1:
-        show_resume_parser(analyzer)
+    if RESUME_CRITIC_AVAILABLE:
+        tabs.append("📄 Resume Critic")
+    if INTERVIEW_PREP_AVAILABLE:
+        tabs.append("🎤 Interview Prep")
+    if MARKET_TRENDS_AVAILABLE:
+        tabs.append("📈 Market Trends")
+    if NLP_QUERY_AVAILABLE:
+        tabs.append("🔍 NLP Query")
+    if RAG_AVAILABLE:
+        tabs.append("🧠 RAG Search")
     
-    with tab2:
-        show_real_time_jobs(analyzer)
+    tab_objects = st.tabs(tabs)
+    tab_index = 0
+    
+    with tab_objects[tab_index]:
+        show_ai_advisor()
+    tab_index += 1
+    
+    if RESUME_CRITIC_AVAILABLE and tab_index < len(tab_objects):
+        with tab_objects[tab_index]:
+            show_resume_critic(analyzer)
+        tab_index += 1
+    
+    if INTERVIEW_PREP_AVAILABLE and tab_index < len(tab_objects):
+        with tab_objects[tab_index]:
+            show_interview_prep()
+        tab_index += 1
+    
+    if MARKET_TRENDS_AVAILABLE and tab_index < len(tab_objects):
+        with tab_objects[tab_index]:
+            show_market_trends()
+        tab_index += 1
+    
+    if NLP_QUERY_AVAILABLE and tab_index < len(tab_objects):
+        with tab_objects[tab_index]:
+            show_nlp_query(analyzer)
+        tab_index += 1
+    
+    if RAG_AVAILABLE and tab_index < len(tab_objects):
+        with tab_objects[tab_index]:
+            show_rag_search(analyzer)
 
-def show_resume_parser(analyzer):
-    """Upload and parse resume"""
+def show_ai_advisor():
+    """LLM-powered career advisor"""
+    st.markdown("#### 💬 AI Career Advisor")
+    
     st.markdown("""
     <div class="info-box">
-        🤖 Upload your resume to automatically extract skills and get personalized career recommendations!
-        <br>Supports PDF, DOCX, and TXT files.
+        🤖 Get personalized career advice from our AI advisor powered by Gemini.
     </div>
     """, unsafe_allow_html=True)
     
-    uploaded_file = st.file_uploader("Choose your resume file", type=['pdf', 'docx', 'txt'])
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        user_skills = st.text_area(
+            "Your Skills",
+            placeholder="Enter your skills (comma-separated)",
+            height=80
+        )
+        user_skills_list = [s.strip() for s in user_skills.split(',')] if user_skills else []
+        
+        target_role = st.selectbox(
+            "Target Role",
+            [''] + ['Data Scientist', 'Data Analyst', 'Data Engineer', 'ML Engineer', 'Business Analyst']
+        )
+    
+    with col2:
+        custom_question = st.text_area(
+            "Ask a question",
+            placeholder="What specific advice are you looking for?",
+            height=100
+        )
+    
+    if st.button("Get AI Advice", type="primary", width="stretch"):
+        with st.spinner("🤔 AI is thinking..."):
+            advisor = LLMCareerAdvisor()
+            
+            if custom_question:
+                # Simulate response
+                response = advisor._get_fallback_response(user_skills_list, target_role)
+            else:
+                response = advisor.get_career_advice(user_skills_list, target_role)
+            
+            if response.get('success'):
+                st.markdown("#### 💡 AI Advice")
+                st.markdown(response.get('advice'))
+            else:
+                st.error("AI service unavailable. Please try again later.")
+
+def show_resume_critic(analyzer):
+    """Resume critique"""
+    st.markdown("#### 📄 Resume Critic & Improvement")
+    
+    st.markdown("""
+    <div class="info-box">
+        🔍 Upload your resume to get detailed feedback and improvement suggestions.
+    </div>
+    """, unsafe_allow_html=True)
+    
+    uploaded_file = st.file_uploader("Upload Resume", type=['pdf', 'docx', 'txt'])
     
     if uploaded_file is not None:
-        temp_path = f"temp_{uploaded_file.name}"
+        temp_path = f"temp_resume_{uploaded_file.name}"
         with open(temp_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
         
-        with st.spinner("Parsing your resume..."):
-            parser = ResumeParser()
-            parsed_data = parser.parse_resume_file(temp_path)
+        with st.spinner("Analyzing your resume..."):
+            critic = ResumeCritic()
+            analysis = critic.analyze_resume(temp_path)
             
-            if 'error' not in parsed_data:
-                st.success("✅ Resume parsed successfully!")
-                
+            if 'error' not in analysis:
                 col1, col2 = st.columns(2)
-                
                 with col1:
-                    st.markdown("#### 🎯 Your Skills")
-                    skills_html = "".join([f'<span class="skill-badge">{skill}</span>' for skill in parsed_data['skills'][:15]])
-                    st.markdown(f'<div style="margin: 10px 0;">{skills_html}</div>', unsafe_allow_html=True)
-                    st.markdown(f"**Experience:** {parsed_data['experience_years']} years")
-                    st.markdown(f"**Education:** {parsed_data['education']['highest_degree'] or 'Not specified'}")
-                
+                    st.metric("Word Count", analysis.get('word_count', 0))
                 with col2:
-                    st.markdown("#### 📊 Market Readiness")
-                    readiness = parsed_data['market_readiness_score']
-                    st.progress(readiness['score'] / 100)
-                    st.metric("Readiness Score", f"{readiness['score']}/100")
-                    st.info(readiness['level'])
+                    st.metric("Keywords Found", len(analysis.get('keywords_found', {}).get('data_science', [])))
                 
-                st.markdown("---")
-                st.markdown("#### 🎯 Find Your Best Match")
-                
-                target_role = st.selectbox("Select target role:", sorted(analyzer.df['job_title'].unique()))
-                
-                if target_role:
-                    role_data = analyzer.df[analyzer.df['job_title'] == target_role]
-                    required_skills_set = set()
-                    
-                    for skills in role_data['skill_required']:
-                        if ',' in str(skills):
-                            for s in str(skills).split(','):
-                                required_skills_set.add(s.strip().title())
-                        else:
-                            required_skills_set.add(str(skills).strip().title())
-                    
-                    required_skills = list(required_skills_set)[:30]
-                    
-                    match = parser.generate_match_analysis(target_role, required_skills)
-                    
-                    if 'error' not in match:
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            st.metric("Match Score", f"{match['match_percentage']}%")
-                        with col2:
-                            st.metric("Matched Skills", len(match['matched_skills']))
-                        with col3:
-                            st.metric("Skills to Learn", len(match['missing_skills']))
-                        
-                        if match['matched_skills']:
-                            st.markdown("**✅ Skills You Have:**")
-                            st.write(", ".join(match['matched_skills'][:10]))
-                        
-                        if match['missing_skills']:
-                            st.markdown("**❌ Skills to Learn (Prioritized):**")
-                            for skill in match['missing_skills'][:10]:
-                                st.markdown(f"- {skill}")
-                        
-                        st.markdown("**📚 Recommendations:**")
-                        for rec in match['recommendations']:
-                            st.markdown(f"- {rec}")
-                    else:
-                        st.error(f"Match analysis error: {match.get('error', 'Unknown error')}")
+                if analysis.get('suggestions'):
+                    st.markdown("#### 📋 Improvement Suggestions")
+                    for suggestion in analysis.get('suggestions', []):
+                        st.warning(suggestion)
+                else:
+                    st.success("✅ Your resume looks great!")
             else:
-                st.error(f"Error parsing resume: {parsed_data.get('error', 'Unknown error')}")
+                st.error(analysis['error'])
         
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
-def show_real_time_jobs(analyzer):
-    """Display real-time jobs from API"""
+def show_interview_prep():
+    """Interview preparation"""
+    st.markdown("#### 🎤 Interview Preparation")
+    
     st.markdown("""
     <div class="info-box">
-        🌐 Fetch real-time job listings from live APIs. Click the button below to get the latest opportunities!
+        🎯 Get role-specific interview questions and preparation tips.
     </div>
     """, unsafe_allow_html=True)
     
-    if st.button("🔄 Fetch Latest Jobs", width="stretch", type="primary"):
-        with st.spinner("Fetching real-time job data from APIs..."):
-            scraper = RealTimeJobScraper()
-            jobs_df = scraper.fetch_all_free_jobs(limit_per_source=20)
+    prep = InterviewPrep()
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        role_options = list(prep.question_bank.keys())
+        target_role = st.selectbox("Select Target Role", role_options)
+        question_count = st.slider("Number of Questions", 1, 10, 5)
+    
+    if st.button("Generate Interview Plan", type="primary", width="stretch"):
+        plan = prep.generate_interview_plan(target_role)
+        st.markdown(plan)
+    
+    questions = prep.get_questions(target_role, question_count)
+    for category, q_list in questions.items():
+        with st.expander(f"📌 {category.title()} Questions"):
+            for q in q_list:
+                st.markdown(f"• {q}")
+
+def show_market_trends():
+    """Market trends"""
+    st.markdown("#### 📈 Real-Time Market Trends")
+    
+    role = st.selectbox(
+        "Select Role",
+        ["Data Scientist", "Data Analyst", "Data Engineer", "ML Engineer", "Business Analyst"]
+    )
+    
+    if st.button("Fetch Trends", type="primary", width="stretch"):
+        with st.spinner("Fetching market trends..."):
+            analyzer = MarketTrendAnalyzer()
+            trends = analyzer.fetch_trends(role)
             
-            if not jobs_df.empty:
-                st.success(f"✅ Fetched {len(jobs_df)} real-time jobs!")
-                st.dataframe(jobs_df[['job_title', 'company', 'location', 'source']])
+            if trends:
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Job Growth Rate", trends['job_counts'].get('growth_rate', 'N/A'))
+                with col2:
+                    st.metric("Average Salary", f"${trends['salary_trends'].get('current_avg', 0):,.0f}")
+                with col3:
+                    st.metric("Salary Growth", trends['salary_trends'].get('growth', 'N/A'))
                 
-                if st.button("📊 Merge with Existing Dataset", width="stretch"):
-                    combined = scraper.merge_with_existing_data(analyzer.df, refresh_data=False)
-                    st.info(f"📊 Combined dataset now has {len(combined)} jobs")
-                    st.session_state.merged_data = combined
+                st.info(trends.get('market_sentiment', 'Data being analyzed'))
+
+def show_nlp_query(analyzer):
+    """NLP Query"""
+    st.markdown("#### 🔍 Natural Language Query")
+    
+    query = st.text_input(
+        "Ask a question",
+        placeholder="e.g., What skills do I need to become a Data Scientist?"
+    )
+    
+    if query and st.button("Ask", type="primary", width="stretch"):
+        with st.spinner("Processing your question..."):
+            processor = NLPQueryProcessor(analyzer.df)
+            response = processor.process_query(query)
+            st.markdown(response.get('response', 'No response'))
+
+def show_rag_search(analyzer):
+    """RAG Search"""
+    st.markdown("#### 🧠 RAG-Powered Semantic Search")
+    
+    query = st.text_input(
+        "Search by meaning",
+        placeholder="e.g., Find jobs that require Python and pay over $100k"
+    )
+    
+    top_k = st.slider("Number of results", 1, 10, 5)
+    
+    if query and st.button("Search", type="primary", width="stretch"):
+        with st.spinner("Searching with AI..."):
+            retriever = RAGRetriever(analyzer.df)
+            results = retriever.search(query, top_k)
+            
+            if results:
+                for i, result in enumerate(results, 1):
+                    with st.expander(f"Result {i}: {result.get('metadata', {}).get('job_title', 'Unknown')}"):
+                        st.markdown(result.get('content', ''))
             else:
-                st.warning("Could not fetch jobs. Check internet connection.")
+                st.warning("No results found.")
 
 if __name__ == "__main__":
     main()
