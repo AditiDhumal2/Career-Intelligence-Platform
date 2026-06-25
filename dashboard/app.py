@@ -1,7 +1,8 @@
 """
 Career Intelligence Platform - Complete Dashboard
-FIXED: Chart visibility, text visibility, Career Path Mapper
-All deprecated parameters updated
+RAG temporarily disabled for deployment compatibility
+All other features: Market Intelligence, Skill Gap Analyzer, Career Path Mapper, 
+Analytics Hub, AI Advisor, NLP Query, Resume Critic, Interview Prep, Market Trends
 """
 
 import streamlit as st
@@ -25,8 +26,24 @@ from src.resume_parser import ResumeParser
 from src.job_scraper import RealTimeJobScraper
 
 # ============================================
-# LLM/AI IMPORTS
+# LLM/AI IMPORTS - RAG DISABLED FOR DEPLOYMENT
 # ============================================
+
+# RAG is disabled for now due to ChromaDB compatibility issues
+RAG_AVAILABLE = False
+
+# Create dummy RAGRetriever class for when RAG is disabled
+class DummyRAGRetriever:
+    def __init__(self, *args, **kwargs):
+        pass
+    def search(self, *args, **kwargs):
+        return []
+    def get_job_recommendations(self, *args, **kwargs):
+        return []
+
+# Use dummy class if RAG is not available
+RAGRetriever = DummyRAGRetriever
+
 try:
     from src.llm_advisor import LLMCareerAdvisor
     LLM_AVAILABLE = True
@@ -57,12 +74,6 @@ try:
 except ImportError:
     NLP_QUERY_AVAILABLE = False
 
-try:
-    from src.rag_retriever import RAGRetriever
-    RAG_AVAILABLE = True
-except ImportError:
-    RAG_AVAILABLE = False
-
 # Fix for PyArrow regex issue
 pd.options.mode.string_storage = 'python'
 
@@ -75,180 +86,131 @@ st.set_page_config(
 )
 
 # ============================================
-# FIXED CSS - Full Text Visibility
+# SIMPLE CLEAN CSS
 # ============================================
 st.markdown("""
 <style>
-    /* Force ALL text to be visible */
-    .stApp, .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, 
-    .stApp label, .stApp div, .stApp span, .stApp li,
-    .stApp .stMarkdown, .stApp .stText, .stApp .stCaption,
-    .stApp .markdown-text-container {
-        color: #1a1a2e !important;
-    }
-    
-    /* Sidebar text */
-    [data-testid="stSidebar"] p,
-    [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2,
-    [data-testid="stSidebar"] h3, [data-testid="stSidebar"] h4,
-    [data-testid="stSidebar"] div, [data-testid="stSidebar"] span {
-        color: #1a1a2e !important;
-    }
-    
-    /* Metric cards - WHITE text on dark background */
-    .metric-card {
-        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
-        padding: 1rem;
-        border-radius: 12px;
-        text-align: center;
-        color: white !important;
-        transition: all 0.3s ease;
-        animation: fadeInUp 0.6s ease-out;
-    }
-    .metric-card h2, .metric-card h3, .metric-card p {
-        color: white !important;
-    }
-    
-    /* Section titles */
-    .section-title {
-        color: #1E88E5 !important;
-        font-weight: 700 !important;
-        font-size: 1.5rem !important;
-        border-left: 4px solid #1E88E5;
-        padding-left: 1rem;
-    }
-    
-    /* Main header */
     .main-header {
-        font-size: 2.5rem;
-        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-size: 2.2rem;
         text-align: center;
-        margin-bottom: 0.5rem;
+        color: #1E88E5;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
     }
-    
     .sub-header {
-        font-size: 1rem;
-        color: #546E7A !important;
+        font-size: 0.95rem;
         text-align: center;
+        color: #666;
         margin-bottom: 1.5rem;
     }
-    
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #1E88E5;
+        border-left: 4px solid #1E88E5;
+        padding-left: 1rem;
+        margin: 1rem 0;
+    }
+    .metric-card {
+        background: linear-gradient(135deg, #1E88E5, #0D47A1);
+        border-radius: 10px;
+        padding: 0.8rem;
+        text-align: center;
+        color: white;
+        min-height: 100px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .metric-card h3 {
+        font-size: 0.7rem;
+        margin: 0;
+        opacity: 0.8;
+        color: white;
+        font-weight: 400;
+        letter-spacing: 0.5px;
+    }
+    .metric-card h2 {
+        font-size: 1.5rem;
+        margin: 0.1rem 0;
+        color: white;
+        font-weight: 700;
+    }
+    .metric-card p {
+        font-size: 0.6rem;
+        margin: 0;
+        opacity: 0.7;
+        color: white;
+    }
+    .info-box {
+        background: #E3F2FD;
+        padding: 0.8rem 1rem;
+        border-radius: 8px;
+        border-left: 4px solid #1E88E5;
+        margin: 0.8rem 0;
+        color: #1a1a2e;
+    }
+    .skill-badge {
+        display: inline-block;
+        background: #1E88E5;
+        color: white;
+        padding: 3px 12px;
+        border-radius: 20px;
+        margin: 3px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background: #f5f7f9;
+    }
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label {
+        color: #1a1a2e !important;
+    }
     /* Radio buttons */
     [data-testid="stRadio"] label {
-        background-color: #ffffff !important;
-        border: 1px solid #c0c4c8 !important;
-        border-radius: 12px !important;
-        padding: 12px 16px !important;
-        margin: 4px 0 !important;
-        color: #1E88E5 !important;
-        font-weight: 500 !important;
-        width: 100% !important;
-        cursor: pointer !important;
-    }
-    [data-testid="stRadio"] label p {
-        color: #1E88E5 !important;
-        font-weight: 500 !important;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 8px 14px;
+        margin: 3px 0;
+        color: #1E88E5;
+        font-weight: 500;
+        width: 100%;
+        cursor: pointer;
     }
     [data-testid="stRadio"] [aria-checked="true"] + div {
-        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%) !important;
-        border: none !important;
+        background: #1E88E5;
+        color: white;
+        border: none;
     }
     [data-testid="stRadio"] [aria-checked="true"] + div p {
-        color: white !important;
+        color: white;
     }
-    
     /* Buttons */
     .stButton > button {
-        color: white !important;
-        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%) !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 0.6rem 1.8rem !important;
-        font-weight: 600 !important;
+        background: #1E88E5;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
     }
-    .stButton > button p {
-        color: white !important;
+    .stButton > button:hover {
+        background: #1565C0;
     }
-    
-    /* Info boxes */
-    .info-box {
-        background: #E3F2FD !important;
-        padding: 1rem !important;
-        border-radius: 10px !important;
-        border-left: 4px solid #1E88E5 !important;
-        margin: 1rem 0 !important;
-        color: #1a1a2e !important;
-    }
-    .info-box p {
-        color: #1a1a2e !important;
-    }
-    
-    /* Success boxes */
-    .success-box {
-        background: #E8F5E9 !important;
-        padding: 1rem !important;
-        border-radius: 10px !important;
-        border-left: 4px solid #43A047 !important;
-        margin: 1rem 0 !important;
-        color: #1a1a2e !important;
-    }
-    .success-box p {
-        color: #1a1a2e !important;
-    }
-    
-    /* Metrics */
+    /* Metrics in sidebar */
     [data-testid="stMetricValue"] {
         color: #1a1a2e !important;
         font-weight: 700 !important;
     }
     [data-testid="stMetricLabel"] {
-        color: #546E7A !important;
+        color: #666 !important;
     }
-    
-    /* Sidebar background */
-    [data-testid="stSidebar"] {
-        background: #f0f2f6 !important;
-        border-right: 1px solid #d0d4d8 !important;
-    }
-    
-    /* App background */
-    .stApp, .stApp > header, .stApp > div, .main, .block-container {
-        background-color: #ffffff !important;
-    }
-    
-    /* Skill badges */
-    .skill-badge {
-        display: inline-block;
-        background: linear-gradient(135deg, #1E88E5 0%, #0D47A1 100%);
-        color: white !important;
-        padding: 5px 14px;
-        border-radius: 25px;
-        margin: 4px;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-    }
-    
-    /* Animations */
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes slideInLeft {
-        from { opacity: 0; transform: translateX(-40px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes slideInRight {
-        from { opacity: 0; transform: translateX(40px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes pulse {
-        0% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.05); opacity: 0.9; }
-        100% { transform: scale(1); opacity: 1; }
+    /* Expander */
+    .streamlit-expanderHeader {
+        color: #1a1a2e !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -259,61 +221,46 @@ if 'page' not in st.session_state:
 
 @st.cache_resource
 def load_components():
-    """Load all analyzers with caching"""
-    with st.spinner('🚀 Loading Career Intelligence Engine...'):
-        time.sleep(0.5)
+    with st.spinner('🚀 Loading...'):
         analyzer = JobMarketAnalyzer()
         skill_gap_analyzer = SkillGapAnalyzer(analyzer.df)
         career_mapper = CareerPathMapper()
     return analyzer, skill_gap_analyzer, career_mapper
 
 def main():
-    """Main dashboard function"""
-    
     # Header
     st.markdown('<div class="main-header">🎯 Career Intelligence Platform</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-header">AI-Powered Career Guidance | Real-time Market Intelligence | Personalized Recommendations</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">AI-Powered Career Guidance | Real-time Market Intelligence</div>', unsafe_allow_html=True)
     
     # Load data
-    with st.spinner('📊 Analyzing job market data...'):
-        analyzer, skill_gap_analyzer, career_mapper = load_components()
+    analyzer, skill_gap_analyzer, career_mapper = load_components()
     
     if analyzer.df is None:
-        st.error("❌ Could not load data. Please generate dataset first!")
-        st.info("Run: python data/generate_large_dataset.py")
+        st.error("❌ Could not load data. Run: python data/generate_large_dataset.py")
         return
     
     # SIDEBAR
     with st.sidebar:
         st.markdown("### 🎯 Career Navigator")
-        st.markdown("*Your personal career intelligence assistant*")
         st.markdown("---")
         
         selected_page = st.radio(
-            "Navigation Menu",
+            "Navigation",
             ["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced AI Features"],
-            key="main_navigation",
             label_visibility="collapsed",
-            index=["📊 Market Intelligence", "💡 Skill Gap Analyzer", "🗺️ Career Path Mapper", "📈 Analytics Hub", "🚀 Advanced AI Features"].index(st.session_state.page)
+            index=0
         )
         st.session_state.page = selected_page
         
         st.markdown("---")
-        
-        st.markdown("### 📊 Market Stats")
-        total_jobs = len(analyzer.df)
-        unique_skills = analyzer.df['skill_required'].nunique()
-        unique_roles = analyzer.df['job_title'].nunique()
-        
-        st.metric("Jobs Analyzed", f"{total_jobs:,}")
-        st.metric("Unique Skills", f"{unique_skills:,}")
-        st.metric("Job Roles", f"{unique_roles:,}")
-        st.metric("Locations", f"{analyzer.df['location'].nunique()}")
+        st.markdown("### 📊 Stats")
+        st.metric("Jobs", f"{len(analyzer.df):,}")
+        st.metric("Skills", f"{analyzer.df['skill_required'].nunique():,}")
+        st.metric("Roles", f"{analyzer.df['job_title'].nunique():,}")
         st.metric("Avg Salary", f"${analyzer.df['avg_salary'].mean():,.0f}")
-        st.metric("Avg Demand", f"{analyzer.df['demand_score'].mean():.0f}/100")
         
         st.markdown("---")
-        st.markdown("*Built with ❤️ for Career Success*")
+        st.markdown("*Built with ❤️*")
     
     # Page routing
     if st.session_state.page == "📊 Market Intelligence":
@@ -328,28 +275,26 @@ def main():
         show_advanced_ai_features(analyzer, skill_gap_analyzer, career_mapper)
 
 # ============================================
-# MARKET INTELLIGENCE - FIXED CHARTS
+# MARKET INTELLIGENCE
 # ============================================
 def show_market_intelligence(analyzer):
-    """Market intelligence dashboard - FIXED chart visibility"""
-    
-    st.markdown('<div class="section-title">📈 Market Intelligence Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📈 Market Intelligence</div>', unsafe_allow_html=True)
     
     # Filters
     col1, col2, col3 = st.columns(3)
     with col1:
         locations = ['All'] + sorted(analyzer.df['location'].unique().tolist())
-        selected_location = st.selectbox("📍 Filter by Location", locations)
+        selected_location = st.selectbox("📍 Location", locations)
     with col2:
         if 'industry' in analyzer.df.columns:
             industries = ['All'] + sorted(analyzer.df['industry'].unique().tolist())
-            selected_industry = st.selectbox("🏭 Filter by Industry", industries)
+            selected_industry = st.selectbox("🏭 Industry", industries)
         else:
             selected_industry = 'All'
     with col3:
         if 'remote_policy' in analyzer.df.columns:
-            remote_options = ['All', 'Remote', 'Hybrid', 'On-site', 'Flexible']
-            selected_remote = st.selectbox("🏠 Remote Policy", remote_options)
+            remote_options = ['All', 'Remote', 'Hybrid', 'On-site']
+            selected_remote = st.selectbox("🏠 Remote", remote_options)
         else:
             selected_remote = 'All'
     
@@ -409,95 +354,68 @@ def show_market_intelligence(analyzer):
     
     st.markdown("---")
     
-    # ============================================
-    # CHARTS - FIXED VISIBILITY
-    # ============================================
-    
-    col1, col2 = st.columns(2, gap="large")
+    # Charts
+    col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("#### 💼 Top Paying Job Roles")
+        st.markdown("#### 💼 Top Paying Jobs")
         top_jobs = analyzer.get_top_paying_jobs(8)
         
         fig = px.bar(
-            top_jobs, 
-            x='avg_salary', 
-            y=top_jobs.index, 
+            top_jobs,
+            x='avg_salary',
+            y=top_jobs.index,
             orientation='h',
-            title='Average Annual Salary by Role',
             labels={'avg_salary': 'Salary ($)', 'y': ''},
-            color='avg_salary', 
+            color='avg_salary',
             color_continuous_scale='Blues',
             text='avg_salary'
         )
         fig.update_traces(
-            texttemplate='${:,.0f}', 
+            texttemplate='${:,.0f}',
             textposition='outside',
-            textfont=dict(size=10, color='#1a1a2e'),
-            cliponaxis=False
+            textfont=dict(size=10)
         )
         fig.update_layout(
-            height=450,
+            height=400,
             showlegend=False,
-            xaxis=dict(
-                tickformat='$,.0f',
-                gridcolor='lightgray',
-                title_font=dict(color='#1a1a2e'),
-                tickfont=dict(color='#1a1a2e')
-            ),
-            yaxis=dict(
-                automargin=True,
-                tickfont=dict(color='#1a1a2e', size=11)
-            ),
-            title_font=dict(color='#1a1a2e'),
-            margin=dict(l=10, r=80, t=50, b=20),
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
+            margin=dict(l=10, r=80, t=10, b=10),
+            xaxis_tickformat='$,.0f',
+            yaxis_automargin=True,
+            plot_bgcolor='white'
         )
-        st.plotly_chart(fig, width='stretch')
+        st.plotly_chart(fig, use_container_width=True)
     
     with col2:
         st.markdown("#### 🎯 Most In-Demand Skills")
         skill_demand = analyzer.get_skills_by_demand(10)
         
         fig = px.bar(
-            skill_demand, 
-            x='demand_score', 
-            y=skill_demand.index, 
+            skill_demand,
+            x='demand_score',
+            y=skill_demand.index,
             orientation='h',
-            title='Skill Demand Score (0-100)',
             labels={'demand_score': 'Demand Score', 'y': ''},
-            color='demand_score', 
+            color='demand_score',
             color_continuous_scale='Teal',
             text='demand_score'
         )
         fig.update_traces(
-            texttemplate='%{text:.0f}', 
+            texttemplate='%{text:.0f}',
             textposition='outside',
-            textfont=dict(size=10, color='#1a1a2e'),
-            cliponaxis=False
+            textfont=dict(size=10)
         )
         fig.update_layout(
-            height=450,
+            height=400,
             showlegend=False,
-            xaxis=dict(
-                range=[0, 105],
-                gridcolor='lightgray',
-                title_font=dict(color='#1a1a2e'),
-                tickfont=dict(color='#1a1a2e')
-            ),
-            yaxis=dict(
-                automargin=True,
-                tickfont=dict(color='#1a1a2e', size=11)
-            ),
-            title_font=dict(color='#1a1a2e'),
-            margin=dict(l=10, r=50, t=50, b=20),
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
+            xaxis=dict(range=[0, 105]),
+            margin=dict(l=10, r=50, t=10, b=10),
+            yaxis_automargin=True,
+            plot_bgcolor='white'
         )
-        st.plotly_chart(fig, width='stretch')
+        st.plotly_chart(fig, use_container_width=True)
     
-    # Skills percentage section
+    # Skill Penetration
     st.markdown("---")
     st.markdown("#### 📊 Skill Market Penetration")
     
@@ -510,144 +428,104 @@ def show_market_intelligence(analyzer):
                 all_skills.append(skills)
     
     skill_counts = Counter(all_skills)
-    skill_percent_df = pd.DataFrame(skill_counts.items(), columns=['Skill', 'Count'])
-    skill_percent_df['Percentage'] = (skill_percent_df['Count'] / len(analyzer.df)) * 100
-    skill_percent_df = skill_percent_df.sort_values('Percentage', ascending=False).head(15)
+    skill_df = pd.DataFrame(skill_counts.items(), columns=['Skill', 'Count'])
+    skill_df['Percentage'] = (skill_df['Count'] / len(analyzer.df)) * 100
+    skill_df = skill_df.sort_values('Percentage', ascending=False).head(15)
     
     fig = px.bar(
-        skill_percent_df,
+        skill_df,
         x='Percentage',
         y='Skill',
         orientation='h',
-        title='Top 15 Skills by Market Penetration',
-        labels={'Percentage': '% of Job Postings', 'Skill': ''},
+        labels={'Percentage': '% of Jobs', 'Skill': ''},
         color='Percentage',
         color_continuous_scale='Viridis',
         text='Percentage'
     )
     fig.update_traces(
-        texttemplate='%{text:.1f}%', 
+        texttemplate='%{text:.1f}%',
         textposition='outside',
-        textfont=dict(size=10, color='#1a1a2e'),
-        cliponaxis=False
+        textfont=dict(size=10)
     )
     fig.update_layout(
-        height=550,
-        xaxis=dict(
-            gridcolor='lightgray',
-            title_font=dict(color='#1a1a2e'),
-            tickfont=dict(color='#1a1a2e')
-        ),
-        yaxis=dict(
-            automargin=True,
-            tickfont=dict(color='#1a1a2e', size=11)
-        ),
-        title_font=dict(color='#1a1a2e'),
-        margin=dict(l=10, r=80, t=50, b=20),
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)'
+        height=500,
+        margin=dict(l=10, r=80, t=10, b=10),
+        yaxis_automargin=True,
+        plot_bgcolor='white'
     )
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, use_container_width=True)
     
-    # Location distribution
+    # Locations
     st.markdown("---")
-    st.markdown("#### 🗺️ Geographic Distribution")
+    st.markdown("#### 🗺️ Top Locations")
     
-    location_stats = analyzer.df.groupby('location').size().reset_index(name='count')
-    location_stats = location_stats.sort_values('count', ascending=False).head(12)
+    loc_stats = analyzer.df.groupby('location').size().reset_index(name='count')
+    loc_stats = loc_stats.sort_values('count', ascending=False).head(12)
     
     fig = px.bar(
-        location_stats, 
-        x='count', 
-        y='location', 
+        loc_stats,
+        x='count',
+        y='location',
         orientation='h',
-        title='Top 12 Locations by Job Opportunities',
-        labels={'count': 'Number of Jobs', 'location': ''},
+        labels={'count': 'Jobs', 'location': ''},
         color='count',
         color_continuous_scale='Reds',
         text='count'
     )
     fig.update_traces(
-        texttemplate='%{text:,}', 
+        texttemplate='%{text:,}',
         textposition='outside',
-        textfont=dict(size=10, color='#1a1a2e'),
-        cliponaxis=False
+        textfont=dict(size=10)
     )
     fig.update_layout(
-        height=450,
-        xaxis=dict(
-            gridcolor='lightgray',
-            title_font=dict(color='#1a1a2e'),
-            tickfont=dict(color='#1a1a2e')
-        ),
-        yaxis=dict(
-            automargin=True,
-            tickfont=dict(color='#1a1a2e', size=11)
-        ),
-        title_font=dict(color='#1a1a2e'),
-        margin=dict(l=10, r=60, t=50, b=20),
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)'
+        height=400,
+        margin=dict(l=10, r=60, t=10, b=10),
+        yaxis_automargin=True,
+        plot_bgcolor='white'
     )
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, use_container_width=True)
 
 # ============================================
 # SKILL GAP ANALYZER
 # ============================================
 def show_skill_gap_analyzer(analyzer, skill_gap_analyzer):
-    """Interactive skill gap analyzer"""
-    
-    st.markdown('<div class="section-title">💡 AI-Powered Skill Gap Analyzer</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">💡 Skill Gap Analyzer</div>', unsafe_allow_html=True)
     
     st.markdown("""
     <div class="info-box">
-        🤖 This tool analyzes your current skills against market requirements and provides personalized learning recommendations.
+        🤖 Enter your skills and target role to get personalized learning recommendations.
     </div>
     """, unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("#### 👤 Your Current Skills")
-        user_skills_input = st.text_area(
+        st.markdown("#### 👤 Your Skills")
+        skills_input = st.text_area(
             "",
-            placeholder="Enter your skills (comma-separated)\nExample: Python, SQL, Excel, Machine Learning",
-            height=120,
+            placeholder="Python, SQL, Excel, Machine Learning",
+            height=80,
             label_visibility="collapsed"
         )
-        user_skills = [s.strip().title() for s in user_skills_input.split(',')] if user_skills_input else []
+        user_skills = [s.strip().title() for s in skills_input.split(',')] if skills_input else []
         
         if user_skills:
-            st.markdown("**Your Skills:**")
-            skills_html = "".join([f'<span class="skill-badge">{skill}</span>' for skill in user_skills])
+            skills_html = "".join([f'<span class="skill-badge">{s}</span>' for s in user_skills])
             st.markdown(f'<div style="margin: 10px 0;">{skills_html}</div>', unsafe_allow_html=True)
     
     with col2:
-        st.markdown("#### 🎯 Target Career")
+        st.markdown("#### 🎯 Target Role")
         all_roles = sorted(analyzer.df['job_title'].unique())
         target_role = st.selectbox("Select your dream job", all_roles)
-        
-        role_data = analyzer.df[analyzer.df['job_title'] == target_role]
-        avg_salary = role_data['avg_salary'].mean()
-        demand = role_data['demand_score'].mean()
-        
-        col_a, col_b = st.columns(2)
-        with col_a:
-            st.metric("💰 Average Salary", f"${avg_salary:,.0f}")
-        with col_b:
-            st.metric("📈 Market Demand", f"{demand:.0f}/100")
     
     if user_skills and target_role:
         st.markdown("---")
-        st.markdown("### 📊 Gap Analysis Results")
         
-        with st.spinner('🔍 Analyzing your career fit...'):
-            time.sleep(0.5)
-            
+        with st.spinner('🔍 Analyzing...'):
             results = skill_gap_analyzer.analyze_gap(user_skills, target_role)
             
             if 'error' not in results:
-                st.progress(results['match_percentage'] / 100, text=f"Overall Match: {results['match_percentage']}%")
+                st.progress(results['match_percentage'] / 100, text=f"Match: {results['match_percentage']}%")
                 
                 col1, col2, col3, col4 = st.columns(4)
                 with col1:
@@ -657,67 +535,43 @@ def show_skill_gap_analyzer(analyzer, skill_gap_analyzer):
                 with col3:
                     st.metric("📋 Required", results['required_skills_count'])
                 with col4:
-                    st.metric("📊 Match Score", f"{results['match_percentage']}%")
+                    st.metric("📊 Score", f"{results['match_percentage']}%")
                 
                 col1, col2 = st.columns(2)
-                
                 with col1:
                     if results['matched_skills']:
                         st.markdown("#### ✅ Skills You Have")
                         for skill in results['matched_skills'][:10]:
                             st.success(f"✓ {skill}")
-                    else:
-                        st.warning("No matching skills found")
-                
                 with col2:
                     if results['missing_skills']:
-                        st.markdown("#### 🎯 Prioritized Learning Path")
-                        for i, skill_info in enumerate(results['learning_path'][:8], 1):
-                            st.markdown(f"**{i}. {skill_info['priority_icon']} {skill_info['skill']}** - {skill_info['priority']} Priority")
-                            st.caption(f"Est. {skill_info['estimated_time']} | Market Demand: {skill_info['market_demand']:.0f}/100")
+                        st.markdown("#### 🎯 Skills to Learn")
+                        for i, skill_info in enumerate(results['learning_path'][:6], 1):
+                            st.markdown(f"**{i}. {skill_info['priority_icon']} {skill_info['skill']}**")
+                            st.caption(f"{skill_info['priority']} | {skill_info['estimated_time']}")
                 
-                st.markdown("---")
-                st.markdown("#### 📚 Recommendation")
                 st.info(results['status']['message'])
-            else:
-                st.error(results['error'])
 
 # ============================================
-# CAREER PATH MAPPER - FIXED
+# CAREER PATH MAPPER
 # ============================================
 def show_career_path_mapper(career_mapper):
-    """Career path mapper - FIXED: Shows results properly"""
-    
     st.markdown('<div class="section-title">🗺️ Career Path Mapper</div>', unsafe_allow_html=True)
     
-    st.markdown("""
-    <div class="info-box">
-        🚀 Plan your career journey! Select your current role and dream role to visualize the complete career roadmap.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Get all available roles
     all_roles = career_mapper.get_all_available_roles()
     
     if not all_roles:
-        st.error("No career paths available. Please check your data.")
+        st.error("No career paths available.")
         return
     
     col1, col2 = st.columns(2)
-    
     with col1:
-        st.markdown("#### 📍 Current Position")
-        current_role = st.selectbox("Where are you now?", all_roles, index=0)
-    
+        current_role = st.selectbox("📍 Current Position", all_roles, index=0)
     with col2:
-        st.markdown("#### 🎯 Dream Position")
-        target_role = st.selectbox("Where do you want to go?", all_roles, index=min(3, len(all_roles)-1))
+        target_role = st.selectbox("🎯 Dream Position", all_roles, index=min(3, len(all_roles)-1))
     
-    # Use width='stretch' instead of use_container_width
-    if st.button("🚀 Generate Career Path", width="stretch", type="primary"):
-        with st.spinner('🗺️ Mapping your career journey...'):
-            time.sleep(0.5)
-            
+    if st.button("🚀 Generate Career Path", use_container_width=True):
+        with st.spinner('🗺️ Mapping...'):
             path_data = career_mapper.get_career_path(current_role, target_role)
             
             if 'error' not in path_data:
@@ -726,97 +580,77 @@ def show_career_path_mapper(career_mapper):
                 
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    st.metric("Total Steps", path_data['total_steps'])
+                    st.metric("Steps", path_data['total_steps'])
                 with col2:
-                    st.metric("Estimated Time", path_data['estimated_time'])
+                    st.metric("Time", path_data['estimated_time'])
                 with col3:
-                    st.metric("Career Track", path_data['track'])
+                    st.metric("Track", path_data['track'])
                 
                 st.markdown("---")
                 
-                # Display each step
                 for i, step in enumerate(path_data['path'], 1):
                     with st.container():
-                        st.markdown(f"### Step {i}: {step['role']}")
+                        st.markdown(f"**Step {i}: {step['role']}**")
                         col1, col2, col3 = st.columns(3)
                         with col1:
-                            st.markdown(f"💰 **{step['salary']}**")
+                            st.markdown(f"💰 {step['salary']}")
                         with col2:
-                            st.markdown(f"⏰ **{step['experience']}** years")
+                            st.markdown(f"⏰ {step['experience']} years")
                         with col3:
-                            st.markdown(f"📋 **Skills:** {', '.join(step['required_skills'][:3])}...")
-                        
+                            st.markdown(f"📋 {', '.join(step['required_skills'][:3])}")
                         if i < len(path_data['path']):
-                            st.markdown("⬇️ **Next Level**")
+                            st.markdown("↓")
                             st.markdown("---")
-            else:
-                st.error(path_data['error'])
 
 # ============================================
 # ANALYTICS HUB
 # ============================================
 def show_analytics_hub(analyzer):
-    """Analytics hub with insights"""
-    
     st.markdown('<div class="section-title">📊 Analytics Hub</div>', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("#### 💡 Market Intelligence")
+        st.markdown("#### 💡 Market Insights")
         top_skill = analyzer.get_skills_by_demand(1).index[0]
         top_role = analyzer.get_top_paying_jobs(1).index[0]
-        top_location = analyzer.get_top_locations(1).index[0]
+        top_loc = analyzer.get_top_locations(1).index[0]
         
-        insights = [
-            f"🎯 **{top_skill}** is the most in-demand skill",
-            f"💰 **{top_role}** offers highest average salary",
-            f"📍 **{top_location}** has most job opportunities",
-            f"📈 Average market demand: {analyzer.df['demand_score'].mean():.0f}/100"
-        ]
-        
-        for insight in insights:
-            st.info(insight)
+        st.info(f"🎯 **{top_skill}** is the most in-demand skill")
+        st.info(f"💰 **{top_role}** offers highest salary")
+        st.info(f"📍 **{top_loc}** has most jobs")
     
     with col2:
-        st.markdown("#### 🚀 Career Action Items")
+        st.markdown("#### 🚀 Quick Actions")
         st.markdown("""
-        - 📝 **Resume Optimization**: Highlight in-demand skills prominently
-        - 🎓 **Learning Path**: Focus on top 3 missing skills
-        - 🌍 **Location Strategy**: Target high-opportunity cities
-        - 🤝 **Networking**: Connect with professionals in target roles
-        - 📊 **Portfolio**: Build projects showcasing top skills
+        - 📝 Update resume with in-demand skills
+        - 🎓 Take courses for missing skills
+        - 🌍 Target high-opportunity locations
+        - 🤝 Network with professionals
         """)
     
-    # Salary distribution
     st.markdown("---")
-    st.markdown("#### 📈 Salary Distribution Analysis")
+    st.markdown("#### 📈 Salary Distribution")
     
     fig = px.histogram(
-        analyzer.df, 
-        x='avg_salary', 
+        analyzer.df,
+        x='avg_salary',
         nbins=30,
-        title='Salary Distribution Across All Jobs',
-        labels={'avg_salary': 'Annual Salary ($)', 'count': 'Number of Jobs'},
+        labels={'avg_salary': 'Salary ($)', 'count': 'Jobs'},
         color_discrete_sequence=['#1E88E5']
     )
-    fig.update_layout(
-        height=450,
-        plot_bgcolor='rgba(0,0,0,0)',
-        xaxis_tickfont=dict(color='#1a1a2e'),
-        yaxis_tickfont=dict(color='#1a1a2e'),
-        title_font=dict(color='#1a1a2e')
-    )
-    st.plotly_chart(fig, width='stretch')
+    fig.update_layout(height=400, plot_bgcolor='white')
+    st.plotly_chart(fig, use_container_width=True)
 
 # ============================================
-# ADVANCED AI FEATURES
+# ADVANCED AI FEATURES - RAG DISABLED
 # ============================================
 def show_advanced_ai_features(analyzer, skill_gap_analyzer, career_mapper):
-    """Show all AI-powered features"""
+    """Show all AI-powered features - RAG temporarily disabled"""
     
     st.markdown('<div class="section-title">🚀 Advanced AI Features</div>', unsafe_allow_html=True)
     
+    # Only include available tabs (RAG is disabled)
     tabs = ["💬 AI Advisor"]
     
     if RESUME_CRITIC_AVAILABLE:
@@ -827,8 +661,7 @@ def show_advanced_ai_features(analyzer, skill_gap_analyzer, career_mapper):
         tabs.append("📈 Market Trends")
     if NLP_QUERY_AVAILABLE:
         tabs.append("🔍 NLP Query")
-    if RAG_AVAILABLE:
-        tabs.append("🧠 RAG Search")
+    # RAG is disabled - don't add it
     
     tab_objects = st.tabs(tabs)
     tab_index = 0
@@ -857,9 +690,7 @@ def show_advanced_ai_features(analyzer, skill_gap_analyzer, career_mapper):
             show_nlp_query(analyzer)
         tab_index += 1
     
-    if RAG_AVAILABLE and tab_index < len(tab_objects):
-        with tab_objects[tab_index]:
-            show_rag_search(analyzer)
+    # RAG tab is removed - no need to handle
 
 def show_ai_advisor():
     """LLM-powered career advisor"""
@@ -893,12 +724,11 @@ def show_ai_advisor():
             height=100
         )
     
-    if st.button("Get AI Advice", type="primary", width="stretch"):
+    if st.button("Get AI Advice", type="primary", use_container_width=True):
         with st.spinner("🤔 AI is thinking..."):
             advisor = LLMCareerAdvisor()
             
             if custom_question:
-                # Simulate response
                 response = advisor._get_fallback_response(user_skills_list, target_role)
             else:
                 response = advisor.get_career_advice(user_skills_list, target_role)
@@ -911,7 +741,7 @@ def show_ai_advisor():
 
 def show_resume_critic(analyzer):
     """Resume critique"""
-    st.markdown("#### 📄 Resume Critic & Improvement")
+    st.markdown("#### 📄 Resume Critic")
     
     st.markdown("""
     <div class="info-box">
@@ -967,7 +797,7 @@ def show_interview_prep():
         target_role = st.selectbox("Select Target Role", role_options)
         question_count = st.slider("Number of Questions", 1, 10, 5)
     
-    if st.button("Generate Interview Plan", type="primary", width="stretch"):
+    if st.button("Generate Interview Plan", type="primary", use_container_width=True):
         plan = prep.generate_interview_plan(target_role)
         st.markdown(plan)
     
@@ -986,7 +816,7 @@ def show_market_trends():
         ["Data Scientist", "Data Analyst", "Data Engineer", "ML Engineer", "Business Analyst"]
     )
     
-    if st.button("Fetch Trends", type="primary", width="stretch"):
+    if st.button("Fetch Trends", type="primary", use_container_width=True):
         with st.spinner("Fetching market trends..."):
             analyzer = MarketTrendAnalyzer()
             trends = analyzer.fetch_trends(role)
@@ -1011,34 +841,11 @@ def show_nlp_query(analyzer):
         placeholder="e.g., What skills do I need to become a Data Scientist?"
     )
     
-    if query and st.button("Ask", type="primary", width="stretch"):
+    if query and st.button("Ask", type="primary", use_container_width=True):
         with st.spinner("Processing your question..."):
             processor = NLPQueryProcessor(analyzer.df)
             response = processor.process_query(query)
             st.markdown(response.get('response', 'No response'))
-
-def show_rag_search(analyzer):
-    """RAG Search"""
-    st.markdown("#### 🧠 RAG-Powered Semantic Search")
-    
-    query = st.text_input(
-        "Search by meaning",
-        placeholder="e.g., Find jobs that require Python and pay over $100k"
-    )
-    
-    top_k = st.slider("Number of results", 1, 10, 5)
-    
-    if query and st.button("Search", type="primary", width="stretch"):
-        with st.spinner("Searching with AI..."):
-            retriever = RAGRetriever(analyzer.df)
-            results = retriever.search(query, top_k)
-            
-            if results:
-                for i, result in enumerate(results, 1):
-                    with st.expander(f"Result {i}: {result.get('metadata', {}).get('job_title', 'Unknown')}"):
-                        st.markdown(result.get('content', ''))
-            else:
-                st.warning("No results found.")
 
 if __name__ == "__main__":
     main()
