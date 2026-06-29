@@ -2,9 +2,9 @@
 
 ## 🎯 AI-Powered Career Guidance & Job Market Analytics
 
-https://static.streamlit.io/badges/streamlit_badge_black_white.svg
-https://img.shields.io/badge/python-3.11-blue.svg
-https://img.shields.io/badge/license-MIT-green.svg
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://career-intelligence-platform-afulhrrvqsnclq2seyfafv.streamlit.app/)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 ---
 🌐 Live Demo
